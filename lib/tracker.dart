@@ -80,6 +80,8 @@ class Tracker {
   DateTime? _overSince; // when the driver went over the limit
   bool _waitingForLocation = false;
   bool _forceLocationManager = false; // set if the fused provider refuses
+  bool _visible = false; // app on screen: always full GPS so speed shows
+  Position? _lastPos; // for speed when the fix has none
   TrackerState state = const TrackerState();
 
   Tracker(this.onState);
@@ -106,6 +108,16 @@ class Tracker {
       _forceLocationManager = false;
       Future(() => _listen(sleeping: false));
     }
+  }
+
+  /// The app is on screen (or not). On screen, GPS stays at full rate
+  /// even far from the mountain roads, so the speed always shows.
+  void setVisible(bool visible) {
+    if (visible == _visible) return;
+    _visible = visible;
+    if (_sub != null && visible && _sleeping == true) Future(() => _listen(sleeping: false));
+    // Going off screen: the next fix picks low power again if far away.
+    if (!visible) _sleeping = null;
   }
 
   Future<void> testSound() async {
@@ -197,8 +209,7 @@ class Tracker {
   }
 
   void _onPosition(Position p) {
-    // speed is negative when the GPS has no valid value for it.
-    final speed = p.speed >= 0 ? p.speed * 3.6 : null;
+    final speed = _speedKmh(p);
     final match = _road!.match(p.latitude, p.longitude);
     final status = speed != null && match.onRoad ? classify(speed, match.limitKmh, config.thresholds) : SpeedStatus.ok;
     // The screen changes straight away; the sound waits until the driver has
@@ -211,7 +222,7 @@ class Tracker {
     }
     final overFor = _overSince == null ? Duration.zero : now.difference(_overSince!);
     _beeper.update(overFor.inSeconds >= config.alarmDelaySeconds ? status : SpeedStatus.ok);
-    final sleep = match.distanceM > sleepDistanceM;
+    final sleep = match.distanceM > sleepDistanceM && !_visible;
     if (sleep != _sleeping) {
       _sleeping = sleep;
       Future(() => _listen(sleeping: sleep));
@@ -226,6 +237,21 @@ class Tracker {
         sleeping: sleep,
       ),
     );
+  }
+
+  /// GPS speed, or (when the fix has none, e.g. a network fix) the distance
+  /// from the previous fix over the time between them.
+  double? _speedKmh(Position p) {
+    final prev = _lastPos;
+    _lastPos = p;
+    if (p.speed >= 0 && (p.speedAccuracy <= 0 || p.speedAccuracy < 10)) return p.speed * 3.6;
+    if (prev == null) return p.speed >= 0 ? p.speed * 3.6 : null;
+    final secs = p.timestamp.difference(prev.timestamp).inMilliseconds / 1000;
+    if (secs <= 0 || secs > 60) return p.speed >= 0 ? p.speed * 3.6 : null;
+    final m = Geolocator.distanceBetween(prev.latitude, prev.longitude, p.latitude, p.longitude);
+    // Ignore jitter smaller than the two fixes' accuracy.
+    if (m < p.accuracy + prev.accuracy) return 0;
+    return m / secs * 3.6;
   }
 
   void _emit(TrackerState s) {

@@ -63,7 +63,12 @@ class _SpeedScreenState extends State<SpeedScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState s) {
     // Coming back from Settings may have changed permissions.
     if (s == AppLifecycleState.resumed) _setup();
+    if (s == AppLifecycleState.paused || s == AppLifecycleState.hidden) _setVisible(false);
   }
+
+  /// Tells the tracker whether the speed is on screen (full GPS) or not.
+  void _setVisible(bool on) =>
+      _isAndroid ? FlutterBackgroundService().invoke('visible', {'on': on}) : _localTracker?.setVisible(on);
 
   Future<void> _setup() async {
     await Permission.notification.request();
@@ -83,7 +88,12 @@ class _SpeedScreenState extends State<SpeedScreen> with WidgetsBindingObserver {
       await startTrackingService(startOnBoot: always);
       final service = FlutterBackgroundService();
       _serviceSub ??= service.on('state').listen((m) {
-        if (m != null && mounted) setState(() => _state = TrackerState.fromMap(m));
+        if (m == null || !mounted) return;
+        final s = TrackerState.fromMap(m);
+        // The service may have started (or restarted) after we said the
+        // app is on screen.
+        if (s.sleeping && WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) _setVisible(true);
+        setState(() => _state = s);
       });
       service.invoke('getState');
     } else if (_localTracker == null) {
@@ -92,6 +102,7 @@ class _SpeedScreenState extends State<SpeedScreen> with WidgetsBindingObserver {
       });
       await _localTracker!.start();
     }
+    _setVisible(true);
   }
 
   Future<void> _openSettings() async {
@@ -211,14 +222,7 @@ class _SpeedScreenState extends State<SpeedScreen> with WidgetsBindingObserver {
     if (!s.hasFix) return const Text('Waiting for GPS…', style: TextStyle(fontSize: 22, color: Colors.white70));
     if (s.onRoad) return const SizedBox.shrink();
     return Column(
-      children: [
-        Text('Mountain road ${formatDistance(s.distanceM!)} away', textAlign: TextAlign.center, style: style),
-        if (s.sleeping)
-          Text(
-            'Low-power mode · checking every ${sleepInterval.inSeconds} s',
-            style: const TextStyle(fontSize: 15, color: Colors.white60),
-          ),
-      ],
+      children: [Text('Mountain road ${formatDistance(s.distanceM!)} away', textAlign: TextAlign.center, style: style)],
     );
   }
 }

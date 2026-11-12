@@ -44,6 +44,8 @@ void onServiceStart(ServiceInstance service) async {
   });
   service.on('getState').listen((_) => service.invoke('state', tracker.state.toMap()));
   service.on('testSound').listen((_) => tracker.testSound());
+  // The app's screen is showing: keep full GPS so speed always shows.
+  service.on('visible').listen((m) => tracker.setVisible(m?['on'] == true));
   // Settings changed (e.g. storage access granted or files edited).
   service.on('reload').listen((_) async {
     await tracker.reload();
