@@ -1,0 +1,42 @@
+zone,branch,start_km,lat,lon,limit_kmh,note
+Zone 1,all,0,,,50,
+Zone 2,all,1.7,,,70,
+Zone 3,all,2.8,,,50,
+Zone 4,all,3.2,,,70,
+Zone 5,all,6.9,,,40,
+Zone 6,all,14.5,,,70,
+Zone 7,all,15.6,,,60,
+Zone 8,all,17.7,,,40,
+Zone 9,all,17.9,,,60,
+Zone 10,all,18.6,,,40,
+Zone 11,all,19.4,,,50,
+Zone 12,all,25.4,,,40,
+Zone 13,all,27.4,,,50,
+Zone 14,pachon,27.6,,,30,
+Zone 15,pachon,27.8,,,50,
+Zone 16,pachon,28.1,,,40,
+Zone 17,pachon,32.3,,,50,
+Zone 18,pachon,33.1,,,40,
+Zone 19,pachon,33.2,,,50,
+Zone 20,pachon,34,,,30,
+Zone 21,pachon,34.3,,,40,
+Zone 22,pachon,34.5,,,30,
+Zone 23,pachon,34.7,,,50,
+Zone 24,pachon,38.2,,,40,
+Zone 25,pachon,38.9,,,50,
+Zone 26,pachon,41.6,,,40,
+Zone 27,tololo,,-30.195868,-70.779942,40,El Quisco split to Tololo
+Rubin spur,rubin,,-30.2438541,-70.7403928,20,Split from Gemini/SOAR road to Rubin
+Zone A,ruta41,0,,,50,By Airport
+Zone B,ruta41,4.70,,,100,2.9 km from airport (map divider is 4.7 km along)
+Zone C,ruta41,5.97,,,70,Altovalsol
+Zone D,ruta41,8.68,,,100,Road to Las Rojas
+Zone E,ruta41,20.10,,,60,La Campana
+Zone F,ruta41,21.77,,,100,Past El Hinojal
+Zone G,ruta41,27.95,,,60,El Molle
+Zone H,ruta41,29.75,,,100,Almendral
+Zone I,ruta41,34.12,,,100,Almendral
+Zone J,ruta41,36.08,,,100,Puclaro
+Zone K,ruta41,41.17,,,60,La Polvadera
+Zone L,ruta41,41.67,,,100,Road to Control Puerta
+Zone M,ruta41,45.16,,,50,Ruta 41 to Control Puerta (D-317)
