@@ -24,8 +24,10 @@ fi
 for tool in flutter pod xcodebuild; do
   command -v $tool >/dev/null || { echo "Missing $tool: see BuildOSX.txt step 1"; exit 1; }
 done
-xcodebuild -version >/dev/null 2>&1 || {
-  echo "Xcode is not ready. Run: sudo xcodebuild -license accept   (and open Xcode once)"
+xcodebuild -license check >/dev/null 2>&1 || {
+  echo "Xcode is not ready. Run:"
+  echo "  sudo xcode-select -s /Applications/Xcode.app && sudo xcodebuild -license accept"
+  echo "then open Xcode once."
   exit 1
 }
 

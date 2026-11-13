@@ -13,7 +13,9 @@ people a TestFlight link. It does not appear in the public App Store.
 ----------------------------
 a) Install Xcode from the Mac App Store. Open it once, accept the licence,
    and when it offers to download the iOS platform, say yes.
-   (Or in Terminal: sudo xcodebuild -license accept)
+   (Or in Terminal:
+     sudo xcode-select -s /Applications/Xcode.app
+     sudo xcodebuild -license accept )
 
 b) Sign Xcode in to your developer account:
    Xcode -> Settings -> Accounts -> + -> Apple ID.
@@ -113,6 +115,7 @@ If something goes wrong
   pick your team, close Xcode, run the script again.
 "CocoaPods not installed" or pod errors:  brew install cocoapods
   then: cd ios && pod install --repo-update && cd ..
-"Xcode is not ready":  sudo xcodebuild -license accept, open Xcode once.
+"Xcode is not ready":  sudo xcode-select -s /Applications/Xcode.app
+  then sudo xcodebuild -license accept, and open Xcode once.
 Upload says the build number was already used: just run the script again.
 Anything else: flutter doctor   (shows what is missing).
