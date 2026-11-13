@@ -73,6 +73,34 @@ Future<bool> loadRandomAlarm() async {
 
 Future<void> saveRandomAlarm(bool on) async => (await SharedPreferences.getInstance()).setBool(_randomAlarmKey, on);
 
+/// On/off switches in Settings that are also mirrored as files in the
+/// folder (ruta41_on.txt / ruta41_off.txt, recinto_on.txt / recinto_off.txt)
+/// so they can be changed either way. A file in the folder wins.
+const ruta41Toggle = 'ruta41';
+const recintoToggle = 'recinto';
+const _toggleDefaults = {ruta41Toggle: false, recintoToggle: true};
+
+Future<bool> loadToggle(String name) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.reload();
+  return prefs.getBool(name) ?? _toggleDefaults[name]!;
+}
+
+Future<void> saveToggle(String name, bool on) async {
+  await (await SharedPreferences.getInstance()).setBool(name, on);
+  if (defaultTargetPlatform != TargetPlatform.android) return;
+  try {
+    if (!Directory(configDir).existsSync()) return;
+    for (final f in ['$name.txt', '${name}_on.txt', '${name}_off.txt']) {
+      final file = File('$configDir/$f');
+      if (file.existsSync()) file.deleteSync();
+    }
+    File('$configDir/${name}_${on ? 'on' : 'off'}.txt').writeAsStringSync('');
+  } on FileSystemException {
+    // no SD access: the app setting alone counts
+  }
+}
+
 /// The ReadMe shown in Settings and written to the folder. Settings always
 /// shows this built-in copy, never the file on the SD card.
 const readMeText =
@@ -94,7 +122,12 @@ Settings). Delete a file to go back to the default.
 ruta41_off.txt   The speed alarm starts at Control Puerta.
         Rename it to ruta41_on.txt (or ruta41.txt) to start the alarm at
         La Serena airport and cover Ruta 41 to Control Puerta. Contents do
-        not matter.
+        not matter. Same as the "Ruta 41 alarms" toggle in Settings.
+
+recinto_on.txt   Alarms on the AURA roads from Control Puerta to Tololo,
+        Pachon and Rubin (default). Rename it to recinto_off.txt to stop
+        those alarms; speed, limit and colours still show. Same as the
+        "Recinto alarms" toggle in Settings.
 
 1020percent.txt   When the alarms start. The first two digits are the
         yellow alarm, the last two the red alarm. Rename it to change them:
@@ -118,7 +151,7 @@ ColorBlind.txt   If this file exists, its first line sets the three screen
         down) the mountain, its limit replaces the built-in one until the
         next zone change or sign. Edit or delete them to fix mistakes.
 
-Random alarm   A switch in Settings (off by default). When on, each alarm
+Random alarm   A toggle in Settings (off by default). When on, each alarm
         is picked at random: yellow from the beep (or your 1.mp3) and two
         fun sounds, red from the loud beep (or your 2.mp3) and three more.
 
@@ -141,6 +174,7 @@ class AppConfig {
   final String? loudSoundPath;
   final int alarmDelaySeconds;
   final bool ruta41;
+  final bool recinto; // alarms on the AURA (recinto) roads
   final Thresholds thresholds;
   final bool randomAlarm;
   final bool debugMode;
@@ -155,6 +189,7 @@ class AppConfig {
     this.loudSoundPath,
     this.alarmDelaySeconds = 0,
     this.ruta41 = false,
+    this.recinto = true,
     this.thresholds = Thresholds.standard,
     this.randomAlarm = false,
     this.debugMode = false,
@@ -168,11 +203,22 @@ class AppConfig {
   static Future<AppConfig> load() async {
     final random = await loadRandomAlarm().catchError((_) => false);
     final debug = await loadDebugMode().catchError((_) => false);
-    if (defaultTargetPlatform != TargetPlatform.android) return AppConfig(randomAlarm: random, debugMode: debug);
+    var ruta41 = await loadToggle(ruta41Toggle).catchError((_) => false);
+    var recinto = await loadToggle(recintoToggle).catchError((_) => true);
+    final fallback = AppConfig(randomAlarm: random, debugMode: debug, ruta41: ruta41, recinto: recinto);
+    if (defaultTargetPlatform != TargetPlatform.android) return fallback;
     try {
       final dir = Directory(configDir);
       if (!dir.existsSync()) dir.createSync(recursive: true);
-      await _writeDefaults();
+      await _writeDefaults(ruta41: ruta41, recinto: recinto);
+      // The files win (they may have been renamed by hand): keep the app
+      // setting in step for when SD access is gone.
+      final fileRuta41 = _exists('ruta41.txt') || _exists('ruta41_on.txt');
+      final fileRecinto = !_exists('recinto_off.txt');
+      if (fileRuta41 != ruta41) await (await SharedPreferences.getInstance()).setBool(ruta41Toggle, ruta41 = fileRuta41);
+      if (fileRecinto != recinto) {
+        await (await SharedPreferences.getInstance()).setBool(recintoToggle, recinto = fileRecinto);
+      }
       return AppConfig(
         lowSoundPath: _find('1'),
         loudSoundPath: _find('2'),
@@ -181,7 +227,8 @@ class AppConfig {
             : _exists('10SecondsWarning.txt')
             ? 10
             : 0,
-        ruta41: _exists('ruta41.txt') || _exists('ruta41_on.txt'),
+        ruta41: ruta41,
+        recinto: recinto,
         thresholds: _readThresholds(),
         randomAlarm: random,
         debugMode: debug,
@@ -190,7 +237,7 @@ class AppConfig {
         folderAvailable: true,
       );
     } on FileSystemException {
-      return AppConfig(randomAlarm: random, debugMode: debug);
+      return fallback;
     }
   }
 
@@ -220,7 +267,7 @@ class AppConfig {
     return null;
   }
 
-  static Future<void> _writeDefaults() async {
+  static Future<void> _writeDefaults({required bool ruta41, required bool recinto}) async {
     File('$configDir/ReadMe.txt').writeAsStringSync(readMeText);
     // App-owned files: refreshed every start so they match this version.
     for (final (asset, name) in [
@@ -245,7 +292,10 @@ class AppConfig {
       File('$configDir/0SecondsWarning.txt').writeAsStringSync('');
     }
     if (!['ruta41.txt', 'ruta41_on.txt', 'ruta41_off.txt'].any(_exists)) {
-      File('$configDir/ruta41_off.txt').writeAsStringSync('');
+      File('$configDir/ruta41_${ruta41 ? 'on' : 'off'}.txt').writeAsStringSync('');
+    }
+    if (!['recinto_on.txt', 'recinto_off.txt'].any(_exists)) {
+      File('$configDir/recinto_${recinto ? 'on' : 'off'}.txt').writeAsStringSync('');
     }
     final dir = Directory(configDir).listSync().map((f) => f.uri.pathSegments.last);
     if (!dir.any((n) => Thresholds.fromFileName(n) != null)) {

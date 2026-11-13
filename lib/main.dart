@@ -111,7 +111,7 @@ class _SpeedScreenState extends State<SpeedScreen> with WidgetsBindingObserver {
     await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen()));
     // Files or SD card access may have changed.
     final config = await AppConfig.load();
-    if (_isAndroid) FlutterBackgroundService().invoke('reload');
+    _isAndroid ? FlutterBackgroundService().invoke('reload') : await _localTracker?.reload();
     if (mounted) {
       setState(() {
         if (config.debugMode && !_config.debugMode) _signDown = false; // up by default

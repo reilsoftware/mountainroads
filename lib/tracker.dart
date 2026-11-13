@@ -247,7 +247,9 @@ class Tracker {
       _overSince ??= now;
     }
     final overFor = _overSince == null ? Duration.zero : now.difference(_overSince!);
-    _beeper.update(overFor.inSeconds >= config.alarmDelaySeconds ? status : SpeedStatus.ok);
+    // "Recinto alarms" off: no sound on the AURA roads (Ruta 41 has its own toggle).
+    final alarmsOn = match.branch == 'Ruta41' || config.recinto;
+    _beeper.update(alarmsOn && overFor.inSeconds >= config.alarmDelaySeconds ? status : SpeedStatus.ok);
     final sleep = match.distanceM > sleepDistanceM && !_visible;
     if (sleep != _sleeping) {
       _sleeping = sleep;

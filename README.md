@@ -24,15 +24,18 @@ With SD card access allowed, the app creates `/sdcard/MountainRoads` with a
 |---|---|
 | `1.mp3` / `2.mp3` | Yellow and red alarm sounds; replace with your own (`.wav`, `.m4a`, `.ogg` also work). Written with the built-in beeps if missing. |
 | `0SecondsWarning.txt` | Beep immediately. Rename to `10SecondsWarning.txt` / `20SecondsWarning.txt` to beep only after 10 / 20 s over the limit (the screen still changes at once). |
-| `ruta41_off.txt` | Alarm starts at Control Puerta (written by default). Rename to `ruta41_on.txt` (or `ruta41.txt`) to start at La Serena airport and cover Ruta 41 (zones A–M). |
+| `ruta41_off.txt` | Alarm starts at Control Puerta (written by default). Rename to `ruta41_on.txt` (or `ruta41.txt`) to start at La Serena airport and cover Ruta 41 (zones A–M). Same as Settings → Toggles → Ruta 41 alarms. |
+| `recinto_on.txt` | Alarms on the AURA roads from Control Puerta (default). Rename to `recinto_off.txt` for no sound there (speed, limit and colours still show). Same as Settings → Toggles → Recinto alarms. |
 | `1020percent.txt` | Alarms over 10% / 20% of the limit (default). Rename to e.g. `1530percent.txt` or `0510percent.txt`; without `percent` (`1020.txt`, `0510.txt`, `0515.txt`) the digits are km/h over the limit. First two digits yellow, last two red. |
 | `60_up.txt`, `40_down.txt`, … | Speed signs recorded in debug mode, one `lat,lon` line each. From a sign on, in its direction (up or down the mountain), its limit replaces the built-in one until the next zone change or sign. |
 | `SpeedZones.png`, `SpeedZones_Ruta41.png` | The two speed-limit maps (rewritten by the app at each start). |
 | `ColorBlind.txt` | First line `color1,color2,color3` (hex) replaces green / yellow / red. An empty file gets the Okabe–Ito colour-blind-safe set `#0072B2,#F0E442,#D55E00`. |
 
-Settings also has a **Random alarm** checkbox (off by default, stored in the app): each alarm then picks a sound at random: yellow from the beep (or `1.mp3`), `mein-leben` and `fallout-sirene`; red from the loud beep (or `2.mp3`), `r2d2_scream_converted`, `red-siren-alert` and `firebat-slow-down` (all in `assets/sounds/random/`). Alarm 1 peaks at 60% of full scale.
+Settings has four sub-menus: **Permissions**, **Toggles** (Random sounds, Ruta 41 alarms, Recinto alarms), **Debug mode**, and **SD Card / Settings Folder** (SD access, ReadMe, what each file currently sets).
 
-**Debug mode** (Settings, off by default) replaces the speed limit panel with a 3×4 grid: the current limit, ↑ / ↓ for the driving direction (↑ when debug mode is switched on), and buttons 20–100. Tapping a number appends the current position to e.g. `60_up.txt`, which is used at once. The driving direction for limits is detected from movement along the road.
+**Random sounds** (Settings → Toggles, off by default, stored in the app): each alarm then picks a sound at random: yellow from the beep (or `1.mp3`), `mein-leben` and `fallout-sirene`; red from the loud beep (or `2.mp3`), `r2d2_scream_converted`, `red-siren-alert` and `firebat-slow-down` (all in `assets/sounds/random/`). Alarm 1 peaks at 60% of full scale.
+
+**Debug mode** (Settings → Debug mode, off by default) replaces the speed limit panel with a 3×4 grid: the current limit, ↑ / ↓ for the driving direction (↑ when debug mode is switched on), and buttons 20–100. Tapping a number appends the current position to e.g. `60_up.txt`, which is used at once. The driving direction for limits is detected from movement along the road.
 
 ## Privacy
 

@@ -102,9 +102,10 @@ add it to the group before then; testers get it automatically.
 - iPhones do not start apps by themselves: open the app once after the
   phone restarts.
 - The /sdcard/MountainRoads settings folder is Android only, so on
-  iPhone: built-in sounds, alarms at 10% / 20% over, no Ruta 41 switch,
-  standard colours, and debug-mode sign recording cannot save.
-- The Random alarm checkbox works.
+  iPhone: built-in sounds, alarms at 10% / 20% over, standard colours,
+  and debug-mode sign recording cannot save.
+- Settings -> Toggles (Random sounds, Ruta 41 alarms, Recinto alarms)
+  work the same.
 - Alarms play even with the silent switch on (they lower music instead of
   stopping it).
 
