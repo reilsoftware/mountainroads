@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -43,6 +44,7 @@ class _SpeedScreenState extends State<SpeedScreen> with WidgetsBindingObserver {
   AppConfig _config = const AppConfig();
   String? _permissionProblem;
   bool _needsAlways = false;
+  bool _signDown = false; // debug mode: direction of the signs being recorded
 
   @override
   void initState() {
@@ -110,7 +112,34 @@ class _SpeedScreenState extends State<SpeedScreen> with WidgetsBindingObserver {
     // Files or SD card access may have changed.
     final config = await AppConfig.load();
     if (_isAndroid) FlutterBackgroundService().invoke('reload');
+    if (mounted) {
+      setState(() {
+        if (config.debugMode && !_config.debugMode) _signDown = false; // up by default
+        _config = config;
+      });
+    }
+  }
+
+  /// Debug mode: save a sign at the current position and use it at once.
+  Future<void> _recordSign(int limit) async {
+    final s = _state, messenger = ScaffoldMessenger.of(context);
+    void say(String text) => messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(text), duration: const Duration(seconds: 2)));
+    if (s.lat == null || s.lon == null) return say('No GPS position yet');
+    try {
+      recordSign(limit, down: _signDown, lat: s.lat!, lon: s.lon!);
+    } on FileSystemException {
+      return say('Could not save: allow SD card access in Settings');
+    }
+    say('Saved ${limit}_${_signDown ? 'down' : 'up'}.txt  ${s.lat!.toStringAsFixed(5)}, ${s.lon!.toStringAsFixed(5)}');
+    final config = await AppConfig.load();
     if (mounted) setState(() => _config = config);
+    if (_isAndroid) {
+      FlutterBackgroundService().invoke('reload');
+    } else {
+      await _localTracker?.reload();
+    }
   }
 
   void _testSound() => _isAndroid ? FlutterBackgroundService().invoke('testSound') : _localTracker?.testSound();
@@ -126,19 +155,26 @@ class _SpeedScreenState extends State<SpeedScreen> with WidgetsBindingObserver {
         style: const TextStyle(fontSize: 200, fontWeight: FontWeight.bold, color: Colors.white, height: 1),
       ),
     );
-    final limit = _Panel(
-      title: 'Speed Limit',
-      unit: s.onRoad ? 'km/h' : '',
-      child: !s.hasFix
-          ? const Text('--', style: TextStyle(fontSize: 200, color: Colors.white70, height: 1))
-          : s.onRoad
-          ? _LimitSign(limit: s.limitKmh!)
-          // Not on the mountain roads: no limit to show.
-          : const Text(
-              'X',
-              style: TextStyle(fontSize: 200, fontWeight: FontWeight.bold, color: Colors.white70, height: 1),
-            ),
-    );
+    final limit = _config.debugMode
+        ? _SignPad(
+            limit: s.hasFix && s.onRoad ? s.limitKmh!.round().toString() : (s.hasFix ? 'X' : '--'),
+            down: _signDown,
+            onDirection: (down) => setState(() => _signDown = down),
+            onSign: _recordSign,
+          )
+        : _Panel(
+            title: 'Speed Limit',
+            unit: s.onRoad ? 'km/h' : '',
+            child: !s.hasFix
+                ? const Text('--', style: TextStyle(fontSize: 200, color: Colors.white70, height: 1))
+                : s.onRoad
+                ? _LimitSign(limit: s.limitKmh!)
+                // Not on the mountain roads: no limit to show.
+                : const Text(
+                    'X',
+                    style: TextStyle(fontSize: 200, fontWeight: FontWeight.bold, color: Colors.white70, height: 1),
+                  ),
+          );
     final portrait = MediaQuery.orientationOf(context) == Orientation.portrait;
 
     final panels = portrait
@@ -225,6 +261,80 @@ class _SpeedScreenState extends State<SpeedScreen> with WidgetsBindingObserver {
       children: [Text('Mountain road ${formatDistance(s.distanceM!)} away', textAlign: TextAlign.center, style: style)],
     );
   }
+}
+
+/// Debug mode: a 3x4 grid in place of the speed limit. Top row: the current
+/// limit and the up / down direction; below, one button per sign limit.
+class _SignPad extends StatelessWidget {
+  final String limit;
+  final bool down;
+  final ValueChanged<bool> onDirection;
+  final ValueChanged<int> onSign;
+
+  const _SignPad({required this.limit, required this.down, required this.onDirection, required this.onSign});
+
+  static const _limits = [20, 30, 40, 50, 60, 70, 80, 90, 100];
+
+  Widget _cell(Widget child, {VoidCallback? onTap, bool selected = false}) => Expanded(
+    child: Padding(
+      padding: const EdgeInsets.all(4),
+      child: Material(
+        color: selected ? Colors.white : Colors.black54,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: FittedBox(
+                child: DefaultTextStyle(
+                  style: TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                    color: selected ? Colors.black : Colors.white,
+                  ),
+                  child: IconTheme(
+                    data: IconThemeData(size: 56, color: selected ? Colors.black : Colors.white),
+                    child: child,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      Expanded(
+        child: Row(
+          children: [
+            _cell(
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('limit', style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal)),
+                  Text(limit),
+                ],
+              ),
+            ),
+            _cell(const Icon(Icons.arrow_upward), selected: !down, onTap: () => onDirection(false)),
+            _cell(const Icon(Icons.arrow_downward), selected: down, onTap: () => onDirection(true)),
+          ],
+        ),
+      ),
+      for (var r = 0; r < 3; r++)
+        Expanded(
+          child: Row(
+            children: [for (final l in _limits.skip(r * 3).take(3)) _cell(Text('$l'), onTap: () => onSign(l))],
+          ),
+        ),
+    ],
+  );
 }
 
 /// A titled panel whose main value scales to fill the space.

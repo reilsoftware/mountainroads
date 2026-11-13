@@ -22,20 +22,65 @@ class RoadMatch {
   bool get onRoad => distanceM <= onRoadThresholdM;
 }
 
+/// A speed sign recorded in debug mode (files like 60_up.txt): from this
+/// point on, driving up (or down) the mountain, the limit is [limitKmh]
+/// until the next zone change or sign.
+class Sign {
+  final double limitKmh;
+  final bool down;
+  final double lat, lon;
+
+  const Sign(this.limitKmh, this.down, this.lat, this.lon);
+}
+
 class _Branch {
   final String name;
   final List<double> xs, ys, cum;
-  final List<(double, double)> zones; // (startAlongM, limitKmh), sorted
 
-  _Branch(this.name, this.xs, this.ys, this.cum, this.zones);
+  /// Going up: (startAlongM, limitKmh), sorted; the last start at or before
+  /// the position applies.
+  List<(double, double)> up;
 
-  double limitAt(double along) {
-    var limit = zones.first.$2;
-    for (final z in zones) {
+  /// Going down: (endAlongM, limitKmh), sorted; the first end beyond the
+  /// position applies (a zone change seen from above).
+  List<(double, double)> down;
+
+  _Branch(this.name, this.xs, this.ys, this.cum, List<(double, double)> zones)
+    : up = zones,
+      down = [for (var i = 1; i < zones.length; i++) (zones[i].$1, zones[i - 1].$2), (double.infinity, zones.last.$2)];
+
+  double limitAt(double along, {bool down = false}) {
+    if (down) {
+      for (final z in this.down) {
+        if (z.$1 > along) return z.$2;
+      }
+      return this.down.last.$2;
+    }
+    var limit = up.first.$2;
+    for (final z in up) {
       if (z.$1 > along) break;
       limit = z.$2;
     }
     return limit;
+  }
+
+  /// (squared distance, along) of the nearest point on this branch.
+  (double, double) project(({double x, double y}) p) {
+    var bestD = double.infinity;
+    var bestAlong = 0.0;
+    for (var i = 0; i < xs.length - 1; i++) {
+      final ax = xs[i], ay = ys[i];
+      final dx = xs[i + 1] - ax, dy = ys[i + 1] - ay;
+      final len2 = dx * dx + dy * dy;
+      final t = len2 == 0 ? 0.0 : (((p.x - ax) * dx + (p.y - ay) * dy) / len2).clamp(0.0, 1.0);
+      final ex = p.x - (ax + t * dx), ey = p.y - (ay + t * dy);
+      final d2 = ex * ex + ey * ey;
+      if (d2 < bestD) {
+        bestD = d2;
+        bestAlong = cum[i] + t * (cum[i + 1] - cum[i]);
+      }
+    }
+    return (bestD, bestAlong);
   }
 }
 
@@ -66,28 +111,40 @@ class Road {
     return Road._(branches, data['placeholder_limits'] == true);
   }
 
-  /// Nearest point on any branch of the road.
-  RoadMatch match(double lat, double lon) {
+  /// Nearest point on any branch of the road; [down] picks the limits for
+  /// driving down the mountain (towards the gate, or the airport).
+  RoadMatch match(double lat, double lon, {bool down = false}) {
     final p = _toXY(lat, lon);
     var bestD = double.infinity;
     var bestAlong = 0.0;
     late _Branch bestBranch;
     for (final b in _branches) {
-      for (var i = 0; i < b.xs.length - 1; i++) {
-        final ax = b.xs[i], ay = b.ys[i];
-        final dx = b.xs[i + 1] - ax, dy = b.ys[i + 1] - ay;
-        final len2 = dx * dx + dy * dy;
-        final t = len2 == 0 ? 0.0 : (((p.x - ax) * dx + (p.y - ay) * dy) / len2).clamp(0.0, 1.0);
-        final ex = p.x - (ax + t * dx), ey = p.y - (ay + t * dy);
-        final d2 = ex * ex + ey * ey;
-        if (d2 < bestD) {
-          bestD = d2;
-          bestAlong = b.cum[i] + t * (b.cum[i + 1] - b.cum[i]);
-          bestBranch = b;
+      final (d2, along) = b.project(p);
+      if (d2 < bestD) {
+        bestD = d2;
+        bestAlong = along;
+        bestBranch = b;
+      }
+    }
+    return RoadMatch(math.sqrt(bestD), bestAlong, bestBranch.name, bestBranch.limitAt(bestAlong, down: down));
+  }
+
+  /// Recorded signs override the zone limits from where they stand to the
+  /// next zone change or sign in their direction. A sign counts for every
+  /// branch it is on (the branches share the lower road).
+  void applySigns(Iterable<Sign> signs) {
+    for (final s in signs) {
+      final p = _toXY(s.lat, s.lon);
+      for (final b in _branches) {
+        final (d2, along) = b.project(p);
+        if (d2 > onRoadThresholdM * onRoadThresholdM) continue;
+        if (s.down) {
+          b.down = [...b.down.where((z) => z.$1 != along), (along, s.limitKmh)]..sort((a, c) => a.$1.compareTo(c.$1));
+        } else {
+          b.up = [...b.up.where((z) => z.$1 != along), (along, s.limitKmh)]..sort((a, c) => a.$1.compareTo(c.$1));
         }
       }
     }
-    return RoadMatch(math.sqrt(bestD), bestAlong, bestBranch.name, bestBranch.limitAt(bestAlong));
   }
 }
 

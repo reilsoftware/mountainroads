@@ -24,6 +24,7 @@ class TrackerState {
   final SpeedStatus status;
   final bool sleeping;
   final String? error;
+  final double? lat, lon; // last fix, for recording signs in debug mode
 
   const TrackerState({
     this.speedKmh,
@@ -33,6 +34,8 @@ class TrackerState {
     this.status = SpeedStatus.ok,
     this.sleeping = false,
     this.error,
+    this.lat,
+    this.lon,
   });
 
   bool get hasFix => distanceM != null;
@@ -45,6 +48,8 @@ class TrackerState {
     'status': status.index,
     'sleeping': sleeping,
     'error': error,
+    'lat': lat,
+    'lon': lon,
   };
 
   factory TrackerState.fromMap(Map<String, dynamic> m) => TrackerState(
@@ -55,6 +60,8 @@ class TrackerState {
     status: SpeedStatus.values[(m['status'] as int?) ?? 0],
     sleeping: m['sleeping'] == true,
     error: m['error'] as String?,
+    lat: (m['lat'] as num?)?.toDouble(),
+    lon: (m['lon'] as num?)?.toDouble(),
   );
 
   /// One line for the Android notification (no speed, so it changes rarely).
@@ -82,6 +89,10 @@ class Tracker {
   bool _forceLocationManager = false; // set if the fused provider refuses
   bool _visible = false; // app on screen: always full GPS so speed shows
   Position? _lastPos; // for speed when the fix has none
+  // Driving direction, from how the position moves along the road.
+  String? _lastBranch;
+  double? _lastAlong;
+  bool _down = false;
   TrackerState state = const TrackerState();
 
   Tracker(this.onState);
@@ -99,7 +110,8 @@ class Tracker {
   /// Re-read /sdcard/MountainRoads (sounds, warning delay, ruta41.txt).
   Future<void> reload() async {
     config = await AppConfig.load();
-    _road = Road.fromJson(await rootBundle.loadString('assets/road.json'), optional: {if (config.ruta41) 'ruta41'});
+    _road = Road.fromJson(await rootBundle.loadString('assets/road.json'), optional: {if (config.ruta41) 'ruta41'})
+      ..applySigns(config.signs);
     await _beeper.init(lowPath: config.lowSoundPath, loudPath: config.loudSoundPath, randomAlarm: config.randomAlarm);
     _sleeping = null; // re-pick the GPS mode on the next fix
     if (_sub != null) {
@@ -210,7 +222,21 @@ class Tracker {
 
   void _onPosition(Position p) {
     final speed = _speedKmh(p);
-    final match = _road!.match(p.latitude, p.longitude);
+    var match = _road!.match(p.latitude, p.longitude, down: _down);
+    // Up or down the mountain: needs a clear move along the same branch.
+    if (match.onRoad && match.branch == _lastBranch && _lastAlong != null) {
+      final moved = match.alongM - _lastAlong!;
+      if (moved.abs() > 10) {
+        if ((moved < 0) != _down) {
+          _down = moved < 0;
+          match = _road!.match(p.latitude, p.longitude, down: _down);
+        }
+        _lastAlong = match.alongM;
+      }
+    } else {
+      _lastBranch = match.branch;
+      _lastAlong = match.alongM;
+    }
     final status = speed != null && match.onRoad ? classify(speed, match.limitKmh, config.thresholds) : SpeedStatus.ok;
     // The screen changes straight away; the sound waits until the driver has
     // been over the limit for the configured delay (10/20SecondsWarning.txt).
@@ -235,6 +261,8 @@ class Tracker {
         onRoad: match.onRoad,
         status: status,
         sleeping: sleep,
+        lat: p.latitude,
+        lon: p.longitude,
       ),
     );
   }

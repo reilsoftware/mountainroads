@@ -220,6 +220,17 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               await _refresh();
             },
           ),
+          const _Header('Debug'),
+          CheckboxListTile(
+            title: const Text('Debug mode'),
+            subtitle: const Text('Speed limit panel becomes buttons for recording speed signs.'),
+            value: c.debugMode,
+            onChanged: (on) async {
+              if (on == true) await _showDebugNotice(context, folderAvailable: c.folderAvailable);
+              await saveDebugMode(on ?? false);
+              await _refresh();
+            },
+          ),
           if (_isAndroid) ...[
             const _Header('Settings folder: $configDir'),
             if (!c.folderAvailable)
@@ -238,6 +249,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               ),
               _Info('Speed alarm starts at', c.ruta41 ? 'La Serena airport (ruta41_on.txt)' : 'Control Puerta'),
               _Info('Colours', c.colors == null ? 'standard' : 'ColorBlind.txt'),
+              _Info('Recorded signs', '${c.signs.length}'),
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: FilledButton.icon(
@@ -275,6 +287,18 @@ class _Info extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListTile(dense: true, title: Text(label), trailing: Text(value));
 }
+
+Future<void> _showDebugNotice(BuildContext context, {required bool folderAvailable}) => showDialog<void>(
+  context: context,
+  builder: (context) => AlertDialog(
+    title: const Text('Debug mode'),
+    content: Text(
+      'Debug files will be written to your SD card but no other information sharing is enabled.'
+      '${folderAvailable ? '' : '\n\nAllow SD card access first, or nothing can be saved.'}',
+    ),
+    actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK'))],
+  ),
+);
 
 /// Full-screen ReadMe with an X to close. Always the copy built into the app.
 void _showReadMe(BuildContext context) => showDialog<void>(

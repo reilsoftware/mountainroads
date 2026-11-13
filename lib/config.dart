@@ -30,6 +30,39 @@ const randomLoudAlarmSounds = [
 ];
 
 const _randomAlarmKey = 'randomAlarm';
+const _debugModeKey = 'debugMode';
+
+/// Debug mode (Settings): the speed limit panel becomes buttons that record
+/// signs to files like 60_up.txt in the settings folder.
+Future<bool> loadDebugMode() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.reload();
+  return prefs.getBool(_debugModeKey) ?? false;
+}
+
+Future<void> saveDebugMode(bool on) async => (await SharedPreferences.getInstance()).setBool(_debugModeKey, on);
+
+final _signFile = RegExp(r'^(\d{2,3})_(up|down)\.txt$', caseSensitive: false);
+
+/// Debug mode: add a sign at [lat],[lon] to e.g. 60_up.txt (one
+/// "lat,lon" line per sign).
+void recordSign(int limitKmh, {required bool down, required double lat, required double lon}) {
+  File('$configDir/${limitKmh}_${down ? 'down' : 'up'}.txt')
+      .writeAsStringSync('${lat.toStringAsFixed(7)},${lon.toStringAsFixed(7)}\n', mode: FileMode.append, flush: true);
+}
+
+/// Signs from 60_up.txt, 40_down.txt, ...: each line "lat,lon".
+List<Sign> parseSigns(String fileName, String contents) {
+  final m = _signFile.firstMatch(fileName);
+  if (m == null) return const [];
+  final limit = double.parse(m[1]!), down = m[2]!.toLowerCase() == 'down';
+  return [
+    for (final line in contents.split('\n'))
+      if (line.split(',') case [final a, final b, ...])
+        if ((double.tryParse(a.trim()), double.tryParse(b.trim())) case (final double lat, final double lon))
+          Sign(limit, down, lat, lon),
+  ];
+}
 
 /// The "Random alarm" switch in Settings (kept in the app, not the folder).
 Future<bool> loadRandomAlarm() async {
@@ -80,6 +113,11 @@ ColorBlind.txt   If this file exists, its first line sets the three screen
         For example: $colorBlindDefaults
         An empty file is filled with colour-blind-friendly defaults.
 
+60_up.txt, 40_down.txt, ...   Speed signs, one "lat,lon" line each, as
+        recorded in debug mode (Settings). From a sign on, going up (or
+        down) the mountain, its limit replaces the built-in one until the
+        next zone change or sign. Edit or delete them to fix mistakes.
+
 Random alarm   A switch in Settings (off by default). When on, each alarm
         is picked at random: yellow from the beep (or your 1.mp3) and two
         fun sounds, red from the loud beep (or your 2.mp3) and three more.
@@ -105,6 +143,8 @@ class AppConfig {
   final bool ruta41;
   final Thresholds thresholds;
   final bool randomAlarm;
+  final bool debugMode;
+  final List<Sign> signs;
 
   /// Normal, warn and danger colours from ColorBlind.txt, if present.
   final List<Color>? colors;
@@ -117,6 +157,8 @@ class AppConfig {
     this.ruta41 = false,
     this.thresholds = Thresholds.standard,
     this.randomAlarm = false,
+    this.debugMode = false,
+    this.signs = const [],
     this.colors,
     this.folderAvailable = false,
   });
@@ -125,7 +167,8 @@ class AppConfig {
   /// storage access (or off Android) this returns the built-in defaults.
   static Future<AppConfig> load() async {
     final random = await loadRandomAlarm().catchError((_) => false);
-    if (defaultTargetPlatform != TargetPlatform.android) return AppConfig(randomAlarm: random);
+    final debug = await loadDebugMode().catchError((_) => false);
+    if (defaultTargetPlatform != TargetPlatform.android) return AppConfig(randomAlarm: random, debugMode: debug);
     try {
       final dir = Directory(configDir);
       if (!dir.existsSync()) dir.createSync(recursive: true);
@@ -141,13 +184,20 @@ class AppConfig {
         ruta41: _exists('ruta41.txt') || _exists('ruta41_on.txt'),
         thresholds: _readThresholds(),
         randomAlarm: random,
+        debugMode: debug,
+        signs: _readSigns(),
         colors: _readColors(),
         folderAvailable: true,
       );
     } on FileSystemException {
-      return AppConfig(randomAlarm: random);
+      return AppConfig(randomAlarm: random, debugMode: debug);
     }
   }
+
+  static List<Sign> _readSigns() => [
+    for (final f in Directory(configDir).listSync().whereType<File>())
+      if (_signFile.hasMatch(f.uri.pathSegments.last)) ...parseSigns(f.uri.pathSegments.last, f.readAsStringSync()),
+  ];
 
   static bool _exists(String name) => File('$configDir/$name').existsSync();
 
