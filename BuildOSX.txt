@@ -15,7 +15,8 @@ a) Install Xcode from the Mac App Store. Open it once, accept the licence,
    and when it offers to download the iOS platform, say yes.
    (Or in Terminal:
      sudo xcode-select -s /Applications/Xcode.app
-     sudo xcodebuild -license accept )
+     sudo xcodebuild -license accept
+     sudo xcodebuild -runFirstLaunch )
 
 b) Sign Xcode in to your developer account:
    Xcode -> Settings -> Accounts -> + -> Apple ID.
@@ -24,7 +25,8 @@ c) Install the tools (Homebrew from https://brew.sh if you don't have it):
      brew install --cask flutter
      brew install cocoapods git
 
-d) Get the code:
+d) Get the code (into a normal folder, NOT iCloud Drive, Google Drive or
+   Dropbox: their file tags break code signing):
      git clone https://github.com/reilsoftware/mountainroads.git
      cd mountainroads
 
@@ -116,6 +118,11 @@ If something goes wrong
 "CocoaPods not installed" or pod errors:  brew install cocoapods
   then: cd ios && pod install --repo-update && cd ..
 "Xcode is not ready":  sudo xcode-select -s /Applications/Xcode.app
-  then sudo xcodebuild -license accept, and open Xcode once.
+  then sudo xcodebuild -license accept
+  and sudo xcodebuild -runFirstLaunch (or open Xcode once).
+"failed to load a required plug-in" / CoreSimulator:
+  sudo xcodebuild -runFirstLaunch
+"resource fork, Finder information, or similar detritus not allowed":
+  the project is in a cloud-synced folder; clone it to e.g. ~/mountainroads.
 Upload says the build number was already used: just run the script again.
 Anything else: flutter doctor   (shows what is missing).

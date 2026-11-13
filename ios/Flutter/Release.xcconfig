@@ -1,3 +1,4 @@
+#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
 #include "Generated.xcconfig"
 
 // Bundle ID and Apple team: tools/build_ios.sh writes Signing.xcconfig

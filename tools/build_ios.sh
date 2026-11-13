@@ -30,6 +30,16 @@ xcodebuild -license check >/dev/null 2>&1 || {
   echo "then open Xcode once."
   exit 1
 }
+xcodebuild -checkFirstLaunchStatus >/dev/null 2>&1 || {
+  echo "Xcode needs its first-launch setup. Run: sudo xcodebuild -runFirstLaunch"
+  exit 1
+}
+
+case "$(pwd -P)" in
+  */Library/CloudStorage/*|*/Mobile\ Documents/*|*/Dropbox/*)
+    echo "This folder is cloud-synced; code signing fails there. Clone the project to e.g. ~/mountainroads."
+    exit 1 ;;
+esac
 
 # Team and bundle ID for this developer only (ignored by git).
 cat > ios/Flutter/Signing.xcconfig <<EOF
