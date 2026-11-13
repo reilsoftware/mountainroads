@@ -210,7 +210,9 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           const _Header('Alarm'),
           CheckboxListTile(
             title: const Text('Random alarm'),
-            subtitle: const Text('Red alarm picks at random from the loud beep and five fun sounds.'),
+            subtitle: const Text(
+              'Each alarm picks a sound at random: yellow from the beep and 2 fun sounds, red from the loud beep and 3.',
+            ),
             value: c.randomAlarm,
             onChanged: (on) async {
               await saveRandomAlarm(on ?? false);

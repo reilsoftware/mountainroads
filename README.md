@@ -29,7 +29,7 @@ With SD card access allowed, the app creates `/sdcard/MountainRoads` with a
 | `SpeedZones.png`, `SpeedZones_Ruta41.png` | The two speed-limit maps (rewritten by the app at each start). |
 | `ColorBlind.txt` | First line `color1,color2,color3` (hex) replaces green / yellow / red. An empty file gets the Okabe–Ito colour-blind-safe set `#0072B2,#F0E442,#D55E00`. |
 
-Settings also has a **Random alarm** checkbox (off by default, stored in the app): the red alarm is then picked at random from the loud beep (or `2.mp3`) and the five sounds in `assets/sounds/random/`.
+Settings also has a **Random alarm** checkbox (off by default, stored in the app): each alarm then picks a sound at random: yellow from the beep (or `1.mp3`), `mein-leben` and `fallout-sirene`; red from the loud beep (or `2.mp3`), `r2d2_scream_converted`, `red-siren-alert` and `firebat-slow-down` (all in `assets/sounds/random/`). Alarm 1 peaks at 60% of full scale.
 
 ## Privacy
 

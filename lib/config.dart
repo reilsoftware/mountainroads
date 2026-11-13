@@ -15,15 +15,16 @@ const colorBlindDefaults = '#0072B2,#F0E442,#D55E00';
 
 const _soundExts = ['mp3', 'wav', 'm4a', 'ogg'];
 
-/// Size of the quieter alarm 1 of the first test builds: a 1.mp3 of exactly
-/// this size is that old default and is replaced by the louder one.
-const _oldDefaultLowMp3Bytes = 5850;
+/// Sizes of the default alarm 1 in earlier builds (too quiet, then too
+/// loud). A 1.mp3 of one of these sizes that differs from the current
+/// default is an old default and is replaced.
+const _oldDefaultLowMp3Bytes = {5850, 10866};
 
-/// Sounds the "Random alarm" setting mixes in with the loud alarm.
-const randomAlarmSounds = [
-  'sounds/random/mein-leben.mp3',
+/// Sounds the "Random alarm" setting mixes in with alarm 1 (yellow) and
+/// alarm 2 (red).
+const randomLowAlarmSounds = ['sounds/random/mein-leben.mp3', 'sounds/random/fallout-sirene.mp3'];
+const randomLoudAlarmSounds = [
   'sounds/random/r2d2_scream_converted.mp3',
-  'sounds/random/fallout-sirene.mp3',
   'sounds/random/red-siren-alert.mp3',
   'sounds/random/firebat-slow-down.mp3',
 ];
@@ -79,9 +80,9 @@ ColorBlind.txt   If this file exists, its first line sets the three screen
         For example: $colorBlindDefaults
         An empty file is filled with colour-blind-friendly defaults.
 
-Random alarm   A switch in Settings (off by default). When on, the red
-        alarm is picked at random from the loud beep (or your 2.mp3) and
-        five fun sounds built into the app.
+Random alarm   A switch in Settings (off by default). When on, each alarm
+        is picked at random: yellow from the beep (or your 1.mp3) and two
+        fun sounds, red from the loud beep (or your 2.mp3) and three more.
 
 Privacy
 -------
@@ -180,7 +181,10 @@ class AppConfig {
       File('$configDir/$name').writeAsBytesSync(bytes.buffer.asUint8List());
     }
     final oldLow = File('$configDir/1.mp3');
-    if (oldLow.existsSync() && oldLow.lengthSync() == _oldDefaultLowMp3Bytes) oldLow.deleteSync();
+    if (oldLow.existsSync() && _oldDefaultLowMp3Bytes.contains(oldLow.lengthSync())) {
+      final current = (await rootBundle.load('assets/sounds/beep_low.mp3')).buffer.asUint8List();
+      if (!listEquals(oldLow.readAsBytesSync(), current)) oldLow.deleteSync();
+    }
     for (final (base, asset) in [('1', 'beep_low'), ('2', 'beep_loud')]) {
       if (_find(base) == null) {
         final bytes = await rootBundle.load('assets/sounds/$asset.mp3');

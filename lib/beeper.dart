@@ -16,11 +16,10 @@ class Beeper {
   final _loud = AudioPlayer();
   Source _lowSrc = AssetSource('sounds/beep_low.wav');
   Source _loudSrc = AssetSource('sounds/beep_loud.wav');
-  // Sound lengths, so the gap is measured from the end of a (possibly long,
-  // user-supplied) sound.
-  Duration _lowLen = Duration.zero;
-  // Red alarms to pick from: the loud beep (or 2.mp3), plus the
-  // randomAlarmSounds when "Random alarm" is on.
+  // Sounds to pick from, with their lengths so the gap is measured from the
+  // end of a (possibly long, user-supplied) sound. The first is the beep
+  // (or 1.mp3 / 2.mp3); the random sounds follow when "Random alarm" is on.
+  List<(Source, Duration)> _lowChoices = [];
   List<(Source, Duration)> _loudChoices = [];
   Duration _lastLen = Duration.zero; // length of the sound played last
   final _random = Random();
@@ -52,18 +51,21 @@ class Beeper {
       await p.setAudioContext(ctx);
       await p.setReleaseMode(ReleaseMode.stop);
     }
-    await _low.setSource(_lowSrc);
-    _lowLen = await _low.getDuration() ?? Duration.zero;
-    _loudChoices = [];
-    for (final src in [_loudSrc, if (randomAlarm) ...randomAlarmSounds.map(AssetSource.new)]) {
+    _lowChoices = await _choices(_low, _lowSrc, randomAlarm ? randomLowAlarmSounds : const []);
+    _loudChoices = await _choices(_loud, _loudSrc, randomAlarm ? randomLoudAlarmSounds : const []);
+  }
+
+  static Future<List<(Source, Duration)>> _choices(AudioPlayer player, Source main, List<String> extra) async {
+    final out = <(Source, Duration)>[];
+    for (final src in [main, ...extra.map(AssetSource.new)]) {
       try {
-        await _loud.setSource(src);
-        _loudChoices.add((src, await _loud.getDuration() ?? Duration.zero));
+        await player.setSource(src);
+        out.add((src, await player.getDuration() ?? Duration.zero));
       } catch (_) {
-        // An unreadable sound is skipped; the loud beep is always first.
+        // An unreadable sound is skipped.
       }
     }
-    if (_loudChoices.isEmpty) _loudChoices.add((_loudSrc, const Duration(seconds: 2)));
+    return out.isEmpty ? [(main, const Duration(seconds: 2))] : out;
   }
 
   void update(SpeedStatus status) {
@@ -76,7 +78,7 @@ class Beeper {
       case SpeedStatus.warn:
         if (escalated || now.difference(_last) >= _lastLen + gap) {
           _last = now;
-          playLow();
+          playLow(random: true);
         }
       case SpeedStatus.danger:
         if (escalated || now.difference(_last) >= _lastLen + gap) {
@@ -86,17 +88,17 @@ class Beeper {
     }
   }
 
-  Future<void> playLow() async {
-    _lastLen = _lowLen;
-    await _low.stop();
-    await _low.play(_lowSrc, volume: 1.0);
-  }
+  /// Alarm 1 (yellow); with [random], picked from all the yellow alarms.
+  Future<void> playLow({bool random = false}) => _play(_low, _lowChoices, random);
 
-  /// The loud alarm, or with [random] one picked from all the red alarms.
-  Future<void> playLoud({bool random = false}) async {
-    final (src, len) = random ? _loudChoices[_random.nextInt(_loudChoices.length)] : _loudChoices.first;
+  /// Alarm 2 (red); with [random], picked from all the red alarms.
+  Future<void> playLoud({bool random = false}) => _play(_loud, _loudChoices, random);
+
+  Future<void> _play(AudioPlayer player, List<(Source, Duration)> choices, bool random) async {
+    if (choices.isEmpty) return;
+    final (src, len) = random ? choices[_random.nextInt(choices.length)] : choices.first;
     _lastLen = len;
-    await _loud.stop();
-    await _loud.play(src, volume: 1.0);
+    await player.stop();
+    await player.play(src, volume: 1.0);
   }
 }
