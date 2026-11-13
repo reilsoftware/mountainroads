@@ -107,7 +107,7 @@ class Tracker {
     }
   }
 
-  /// Re-read /sdcard/MountainRoads (sounds, warning delay, ruta41.txt).
+  /// Re-read /sdcard/MountainRoads and the Settings toggles.
   Future<void> reload() async {
     config = await AppConfig.load();
     _road = Road.fromJson(await rootBundle.loadString('assets/road.json'), optional: {if (config.ruta41) 'ruta41'})

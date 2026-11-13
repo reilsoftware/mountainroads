@@ -323,12 +323,6 @@ class _TogglesPageState extends State<_TogglesPage> with WidgetsBindingObserver,
             value: c.recinto,
             onChanged: (on) => _set(() => saveToggle(recintoToggle, on)),
           ),
-          if (_isAndroid && c.folderAvailable)
-            const _Text(
-              'Ruta 41 and Recinto are also saved in the settings folder as ruta41_on/off.txt and '
-              'recinto_on/off.txt, so renaming those files works too.',
-              small: true,
-            ),
         ],
       ),
     );
@@ -412,7 +406,6 @@ class _FolderPageState extends State<_FolderPage> with WidgetsBindingObserver, _
   Widget build(BuildContext context) {
     final c = _config;
     String sound(String? path, String fallback) => path == null ? fallback : path.split('/').last;
-    String onOff(bool on) => on ? 'on' : 'off';
     return Scaffold(
       appBar: AppBar(title: const Text('SD Card / Settings Folder')),
       body: ListView(
@@ -450,8 +443,6 @@ class _FolderPageState extends State<_FolderPage> with WidgetsBindingObserver, _
                     ? 'immediately (0SecondsWarning.txt)'
                     : '${c.alarmDelaySeconds} s (${c.alarmDelaySeconds}SecondsWarning.txt)',
               ),
-              _Info('Ruta 41 alarms', '${onOff(c.ruta41)} (ruta41_${onOff(c.ruta41)}.txt)'),
-              _Info('Recinto alarms', '${onOff(c.recinto)} (recinto_${onOff(c.recinto)}.txt)'),
               _Info('Colours', c.colors == null ? 'standard' : 'ColorBlind.txt'),
               _Info('Recorded signs', '${c.signs.length}'),
               const _Info('Maps', 'SpeedZones.png, SpeedZones_Ruta41.png'),
