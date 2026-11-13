@@ -15,6 +15,9 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<!-- No encryption beyond Apple's own: skips the export compliance question in App Store Connect. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>CFBundleDisplayName</key>
 	<string>Mountain Roads</string>
 	<key>CFBundleExecutable</key>

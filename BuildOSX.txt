@@ -1,0 +1,118 @@
+Mountain Roads: building the iPhone app on a Mac and sharing it
+================================================================
+
+You need: a Mac, a paid Apple Developer account (you), about an hour the
+first time and 5 minutes after that. The people you share with only need
+an iPhone and Apple's free TestFlight app.
+
+How sharing works: you upload the app to App Store Connect, then send
+people a TestFlight link. It does not appear in the public App Store.
+
+
+1. One-time setup on the Mac
+----------------------------
+a) Install Xcode from the Mac App Store. Open it once, accept the licence,
+   and when it offers to download the iOS platform, say yes.
+   (Or in Terminal: sudo xcodebuild -license accept)
+
+b) Sign Xcode in to your developer account:
+   Xcode -> Settings -> Accounts -> + -> Apple ID.
+
+c) Install the tools (Homebrew from https://brew.sh if you don't have it):
+     brew install --cask flutter
+     brew install cocoapods git
+
+d) Get the code:
+     git clone https://github.com/reilsoftware/mountainroads.git
+     cd mountainroads
+
+e) Find your Team ID: https://developer.apple.com/account
+   -> Membership details -> Team ID (10 characters, e.g. AB12CD34EF).
+
+
+2. One-time: create the app in App Store Connect
+------------------------------------------------
+a) https://developer.apple.com/account/resources/identifiers -> +
+   -> App IDs -> App. Description "Mountain Roads", Bundle ID (Explicit):
+     edu.stanford.reil.mountainRoads
+   If Apple says it is taken, use your own, e.g. com.<yourname>.mountainroads,
+   and pass it to the build script in step 3.
+   No extra capabilities are needed.
+
+b) https://appstoreconnect.apple.com -> Apps -> + -> New App.
+   Platform iOS, name "Mountain Roads" (add a word if the name is taken),
+   language English, the bundle ID from a), SKU "mountainroads",
+   access Full Access.
+
+
+3. Build and upload (every new version)
+---------------------------------------
+In the mountainroads folder:
+
+     git pull
+     tools/build_ios.sh YOUR_TEAM_ID
+  or, with your own bundle ID:
+     tools/build_ios.sh YOUR_TEAM_ID com.yourname.mountainroads
+
+The script builds the app, gives it a fresh build number, and opens
+Xcode's Organizer. There: select the new build -> Distribute App
+-> App Store Connect -> Distribute (accept the defaults). Done.
+
+About 5-30 minutes later the build shows in App Store Connect -> your app
+-> TestFlight. (Apple emails you when it has finished processing.)
+
+Optional, no clicking at all: create an App Store Connect API key
+(App Store Connect -> Users and Access -> Integrations -> App Store Connect
+API -> +, role "App Manager"), save the .p8 file as
+~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8, then:
+     ASC_KEY_ID=<KEY_ID> ASC_ISSUER_ID=<ISSUER_ID> tools/build_ios.sh YOUR_TEAM_ID
+
+
+4. Share it with others (TestFlight)
+------------------------------------
+Easiest for many people, a public link:
+  App Store Connect -> your app -> TestFlight -> External Testing -> +
+  -> new group "Drivers" -> add the build -> fill in the short Test
+  Information (what to test, a contact email) -> Submit for Review.
+  Apple's beta review usually takes under a day, only for the first build
+  of each version. Then turn on "Public Link" and send that link to
+  anyone (up to 10,000 people).
+
+Quickest for a few people on your team (no review):
+  Users and Access -> add them (role Developer or Marketing), then
+  TestFlight -> Internal Testing -> + group -> add them and the build.
+
+What the drivers do:
+  1. Install "TestFlight" from the App Store.
+  2. Open the link (or the email invite) on the iPhone -> Install.
+  3. Open Mountain Roads, allow Location "Always" and notifications.
+
+TestFlight builds expire after 90 days: upload a new build (step 3) and
+add it to the group before then; testers get it automatically.
+
+
+5. What is different on iPhone
+------------------------------
+- Speed, limits, colours/patterns and alarms work the same, also with the
+  phone locked in a pocket, as long as Location is "Always".
+- iPhones do not start apps by themselves: open the app once after the
+  phone restarts.
+- The /sdcard/MountainRoads settings folder is Android only, so on
+  iPhone: built-in sounds, alarms at 10% / 20% over, no Ruta 41 switch,
+  standard colours, and debug-mode sign recording cannot save.
+- The Random alarm checkbox works.
+- Alarms play even with the silent switch on (they lower music instead of
+  stopping it).
+
+
+If something goes wrong
+-----------------------
+"No profiles for ... were found" / signing errors:
+  open ios/Runner.xcworkspace in Xcode, click Runner (left) -> target
+  Runner -> Signing & Capabilities, tick "Automatically manage signing",
+  pick your team, close Xcode, run the script again.
+"CocoaPods not installed" or pod errors:  brew install cocoapods
+  then: cd ios && pod install --repo-update && cd ..
+"Xcode is not ready":  sudo xcodebuild -license accept, open Xcode once.
+Upload says the build number was already used: just run the script again.
+Anything else: flutter doctor   (shows what is missing).

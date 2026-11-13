@@ -101,3 +101,7 @@ flutter run                      # on a connected phone
 iOS needs full Xcode (App Store), then `sudo xcode-select --switch
 /Applications/Xcode.app/Contents/Developer`, open `ios/Runner.xcworkspace`,
 set your Team under Signing, and `flutter run` with the iPhone connected.
+
+## iPhone
+
+See [BuildOSX.txt](BuildOSX.txt): build on a Mac with `tools/build_ios.sh TEAM_ID` and share through TestFlight.
