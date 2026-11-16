@@ -4,6 +4,9 @@ import 'dart:math' as math;
 /// Within this distance of the road centreline you count as "on the mountain".
 const double onRoadThresholdM = 40;
 
+/// Branch names of the AURA recinto roads in La Serena start with this.
+const recintoPrefix = 'Recinto';
+
 const double _refLat = -30.15 * math.pi / 180;
 const double _mPerDeg = 111320;
 
@@ -17,9 +20,16 @@ class RoadMatch {
   final String branch;
   final double limitKmh;
 
-  const RoadMatch(this.distanceM, this.alongM, this.branch, this.limitKmh);
+  /// A road that is not ours (e.g. Av. Juan Cisternas beside the recinto)
+  /// is nearer than [branch]: the driver is on that road instead.
+  final bool elsewhere;
 
-  bool get onRoad => distanceM <= onRoadThresholdM;
+  const RoadMatch(this.distanceM, this.alongM, this.branch, this.limitKmh, {this.elsewhere = false});
+
+  bool get onRoad => distanceM <= onRoadThresholdM && !elsewhere;
+
+  /// In the AURA recinto in La Serena (25 km/h), not on the mountain roads.
+  bool get inRecinto => branch.startsWith(recintoPrefix);
 }
 
 /// A speed sign recorded in debug mode (files like 60_up.txt): from this
@@ -37,6 +47,9 @@ class _Branch {
   final String name;
   final List<double> xs, ys, cum;
 
+  /// A road near the recinto that is not ours (no limit of its own).
+  final bool other;
+
   /// Going up: (startAlongM, limitKmh), sorted; the last start at or before
   /// the position applies.
   List<(double, double)> up;
@@ -45,7 +58,7 @@ class _Branch {
   /// position applies (a zone change seen from above).
   List<(double, double)> down;
 
-  _Branch(this.name, this.xs, this.ys, this.cum, List<(double, double)> zones)
+  _Branch(this.name, this.xs, this.ys, this.cum, List<(double, double)> zones, {this.other = false})
     : up = zones,
       down = [for (var i = 1; i < zones.length; i++) (zones[i].$1, zones[i - 1].$2), (double.infinity, zones.last.$2)];
 
@@ -106,7 +119,7 @@ class Road {
         ys.add(xy.y);
       }
       final zones = [for (final z in b['zones'] as List) ((z[0] as num).toDouble(), (z[1] as num).toDouble())];
-      branches.add(_Branch(b['name'] as String, xs, ys, cum, zones));
+      branches.add(_Branch(b['name'] as String, xs, ys, cum, zones, other: b['kind'] == 'other'));
     }
     return Road._(branches, data['placeholder_limits'] == true);
   }
@@ -118,15 +131,24 @@ class Road {
     var bestD = double.infinity;
     var bestAlong = 0.0;
     late _Branch bestBranch;
+    var otherD = double.infinity;
     for (final b in _branches) {
       final (d2, along) = b.project(p);
-      if (d2 < bestD) {
+      if (b.other) {
+        if (d2 < otherD) otherD = d2;
+      } else if (d2 < bestD) {
         bestD = d2;
         bestAlong = along;
         bestBranch = b;
       }
     }
-    return RoadMatch(math.sqrt(bestD), bestAlong, bestBranch.name, bestBranch.limitAt(bestAlong, down: down));
+    return RoadMatch(
+      math.sqrt(bestD),
+      bestAlong,
+      bestBranch.name,
+      bestBranch.limitAt(bestAlong, down: down),
+      elsewhere: otherD <= bestD, // a tie (a junction) is the other road
+    );
   }
 
   /// Recorded signs override the zone limits from where they stand to the
@@ -136,6 +158,7 @@ class Road {
     for (final s in signs) {
       final p = _toXY(s.lat, s.lon);
       for (final b in _branches) {
+        if (b.other) continue;
         final (d2, along) = b.project(p);
         if (d2 > onRoadThresholdM * onRoadThresholdM) continue;
         if (s.down) {

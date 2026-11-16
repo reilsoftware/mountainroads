@@ -3,6 +3,7 @@
 
 Inputs (in tools/data/):
   route_<branch>.json   OSRM route responses, gate -> summit (--fetch re-downloads).
+  recinto.json          AURA recinto roads in La Serena (tools/recinto_from_osm.py).
   zones.csv             zone,branch,start_km,lat,lon,limit_kmh,note
                         One row per zone start. Give either start_km (distance
                         from Control Puerta as in the 2020 GPS report) or
@@ -195,6 +196,16 @@ def main():
         })
         print(f"{name}: {len(pts)} points, {len(buffered)} zones: "
               + " ".join(f"{n}@{s / 1000:.2f}={l:.0f}" for s, l, n in buffered))
+
+    # AURA recinto in La Serena: every road 25 km/h. The roads around it
+    # ("other") only tell the app when the driver is not in the recinto.
+    rec = json.loads((DATA / "recinto.json").read_text())
+    for r in rec["recinto"]:
+        branches.append({"name": f"Recinto {r['id']}", "kind": "recinto", "points": r["points"],
+                         "zones": [[0, rec["limit_kmh"]]]})
+    for o in rec["others"]:
+        branches.append({"name": o["name"], "kind": "other", "points": o["points"], "zones": [[0, 0]]})
+    print(f"Recinto: {len(rec['recinto'])} roads at {rec['limit_kmh']} km/h, {len(rec['others'])} other roads nearby")
 
     OUT.write_text(json.dumps({"placeholder_limits": False, "branches": branches}, separators=(",", ":")))
     print(f"wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size // 1024} KB)")

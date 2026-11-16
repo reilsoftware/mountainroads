@@ -25,6 +25,7 @@ class TrackerState {
   final bool sleeping;
   final String? error;
   final double? lat, lon; // last fix, for recording signs in debug mode
+  final bool recinto; // nearest of our roads is the AURA recinto in La Serena
 
   const TrackerState({
     this.speedKmh,
@@ -36,6 +37,7 @@ class TrackerState {
     this.error,
     this.lat,
     this.lon,
+    this.recinto = false,
   });
 
   bool get hasFix => distanceM != null;
@@ -50,6 +52,7 @@ class TrackerState {
     'error': error,
     'lat': lat,
     'lon': lon,
+    'recinto': recinto,
   };
 
   factory TrackerState.fromMap(Map<String, dynamic> m) => TrackerState(
@@ -62,15 +65,19 @@ class TrackerState {
     error: m['error'] as String?,
     lat: (m['lat'] as num?)?.toDouble(),
     lon: (m['lon'] as num?)?.toDouble(),
+    recinto: m['recinto'] == true,
   );
 
   /// One line for the Android notification (no speed, so it changes rarely).
   String get summary {
     if (error != null) return error!;
     if (!hasFix) return 'Waiting for GPS…';
-    if (onRoad) return 'On the mountain road · limit ${limitKmh!.round()} km/h';
-    return 'Mountain road ${formatDistance(distanceM!)} away${sleeping ? ' · low power' : ''}';
+    if (onRoad) return '${recinto ? 'In the AURA recinto' : 'On the mountain road'} · limit ${limitKmh!.round()} km/h';
+    return '$nearestRoad ${formatDistance(distanceM!)} away${sleeping ? ' · low power' : ''}';
   }
+
+  /// What the distance is to: whichever of our roads is nearer.
+  String get nearestRoad => recinto ? 'AURA recinto' : 'Mountain road';
 }
 
 String formatDistance(double m) => m < 1000 ? '${m.round()} m' : '${(m / 1000).toStringAsFixed(m < 10000 ? 1 : 0)} km';
@@ -247,8 +254,8 @@ class Tracker {
       _overSince ??= now;
     }
     final overFor = _overSince == null ? Duration.zero : now.difference(_overSince!);
-    // "Recinto alarms" off: no sound on the AURA roads (Ruta 41 has its own toggle).
-    final alarmsOn = match.branch == 'Ruta41' || config.recinto;
+    // "Recinto alarms" off: no sound in the AURA recinto in La Serena.
+    final alarmsOn = !match.inRecinto || config.recinto;
     _beeper.update(alarmsOn && overFor.inSeconds >= config.alarmDelaySeconds ? status : SpeedStatus.ok);
     final sleep = match.distanceM > sleepDistanceM && !_visible;
     if (sleep != _sleeping) {
@@ -265,6 +272,7 @@ class Tracker {
         sleeping: sleep,
         lat: p.latitude,
         lon: p.longitude,
+        recinto: match.inRecinto,
       ),
     );
   }

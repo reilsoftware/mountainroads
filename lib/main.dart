@@ -258,7 +258,9 @@ class _SpeedScreenState extends State<SpeedScreen> with WidgetsBindingObserver {
     if (!s.hasFix) return const Text('Waiting for GPS…', style: TextStyle(fontSize: 22, color: Colors.white70));
     if (s.onRoad) return const SizedBox.shrink();
     return Column(
-      children: [Text('Mountain road ${formatDistance(s.distanceM!)} away', textAlign: TextAlign.center, style: style)],
+      children: [
+        Text('${s.nearestRoad} ${formatDistance(s.distanceM!)} away', textAlign: TextAlign.center, style: style),
+      ],
     );
   }
 }

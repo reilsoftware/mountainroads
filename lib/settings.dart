@@ -317,8 +317,8 @@ class _TogglesPageState extends State<_TogglesPage> with WidgetsBindingObserver,
           SwitchListTile(
             title: const Text('Recinto alarms'),
             subtitle: const Text(
-              'Alarms on the AURA roads from Control Puerta to Tololo, Pachón and Rubin. '
-              'When off, speed, limit and colours still show but there is no sound. Default on.',
+              'Alarms in the AURA recinto in La Serena (Av. Juan Cisternas 1500), 25 km/h on all its roads. '
+              'When off, speed, limit and colours still show there but there is no sound. Default on.',
             ),
             value: c.recinto,
             onChanged: (on) => _set(() => saveToggle(recintoToggle, on)),
@@ -350,9 +350,7 @@ class _DebugPageState extends State<_DebugPage> with WidgetsBindingObserver, _Li
             color: Theme.of(context).colorScheme.errorContainer,
             child: const ListTile(
               leading: Icon(Icons.warning_amber),
-              title: Text(
-                'Debug files will be written to your SD card but no other information sharing is enabled.',
-              ),
+              title: Text('Debug files will be written to your SD card but no other information sharing is enabled.'),
             ),
           ),
           SwitchListTile(

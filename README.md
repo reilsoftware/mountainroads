@@ -29,7 +29,7 @@ With SD card access allowed, the app creates `/sdcard/MountainRoads` with a
 | `SpeedZones.png`, `SpeedZones_Ruta41.png` | The two speed-limit maps (rewritten by the app at each start). |
 | `ColorBlind.txt` | First line `color1,color2,color3` (hex) replaces green / yellow / red. An empty file gets the Okabe–Ito colour-blind-safe set `#0072B2,#F0E442,#D55E00`. |
 
-Settings has four sub-menus: **Permissions**, **Toggles** (Random sounds; Ruta 41 alarms, off by default, which start the alarm at La Serena airport and cover Ruta 41; Recinto alarms, on by default, for the AURA roads from Control Puerta; all kept in the app, not as files), **Debug mode**, and **SD Card / Settings Folder** (SD access, ReadMe, what each file currently sets).
+Settings has four sub-menus: **Permissions**, **Toggles** (Random sounds; Ruta 41 alarms, off by default, which start the alarm at La Serena airport and cover Ruta 41; Recinto alarms, on by default, for the AURA recinto in La Serena (Av. Juan Cisternas 1500, 25 km/h on all its roads); all kept in the app, not as files), **Debug mode**, and **SD Card / Settings Folder** (SD access, ReadMe, what each file currently sets).
 
 **Random sounds** (Settings → Toggles, off by default, stored in the app): each alarm then picks a sound at random: yellow from the beep (or `1.mp3`), `mein-leben` and `fallout-sirene`; red from the loud beep (or `2.mp3`), `r2d2_scream_converted`, `red-siren-alert` and `firebat-slow-down` (all in `assets/sounds/random/`). Alarm 1 peaks at 60% of full scale.
 

@@ -128,7 +128,8 @@ ColorBlind.txt   If this file exists, its first line sets the three screen
 
 Switches in Settings -> Toggles (kept in the app, not in this folder):
         Random sounds, Ruta 41 alarms (from La Serena airport) and
-        Recinto alarms (the AURA roads from Control Puerta).
+        Recinto alarms (the AURA recinto in La Serena, Av. Juan Cisternas
+        1500: 25 km/h on all its roads; on by default).
 
 Privacy
 -------
@@ -149,7 +150,7 @@ class AppConfig {
   final String? loudSoundPath;
   final int alarmDelaySeconds;
   final bool ruta41;
-  final bool recinto; // alarms on the AURA (recinto) roads
+  final bool recinto; // alarms in the AURA recinto in La Serena
   final Thresholds thresholds;
   final bool randomAlarm;
   final bool debugMode;
