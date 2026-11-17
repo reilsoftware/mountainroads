@@ -28,7 +28,7 @@ class RoadMatch {
 
   bool get onRoad => distanceM <= onRoadThresholdM && !elsewhere;
 
-  /// In the AURA recinto in La Serena (25 km/h), not on the mountain roads.
+  /// In the AURA recinto in La Serena (20 km/h, main roads 30), not on the mountain roads.
   bool get inRecinto => branch.startsWith(recintoPrefix);
 }
 

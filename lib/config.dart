@@ -114,7 +114,8 @@ Settings). Delete a file to go back to the default.
 
 SpeedZones.png         Map of the speed limits from Control Puerta.
 SpeedZones_Ruta41.png  Map including Ruta 41 from La Serena airport.
-        (Both are rewritten by the app; changes to them are not kept.)
+SpeedZones_Recinto.png Map of the AURA recinto in La Serena (20 / 30 km/h).
+        (All three are rewritten by the app; changes to them are not kept.)
 
 ColorBlind.txt   If this file exists, its first line sets the three screen
         colours as hex codes: normal,over-10%,over-20%
@@ -129,7 +130,7 @@ ColorBlind.txt   If this file exists, its first line sets the three screen
 Switches in Settings -> Toggles (kept in the app, not in this folder):
         Random sounds, Ruta 41 alarms (from La Serena airport) and
         Recinto alarms (the AURA recinto in La Serena, Av. Juan Cisternas
-        1500: 25 km/h on all its roads; on by default).
+        1500: 20 km/h, 30 on the main roads; on by default).
 
 Privacy
 -------
@@ -258,6 +259,7 @@ class AppConfig {
     for (final (asset, name) in [
       ('docs/speed_zones.png', 'SpeedZones.png'),
       ('docs/speed_zones_ruta41.png', 'SpeedZones_Ruta41.png'),
+      ('docs/speed_zones_recinto.png', 'SpeedZones_Recinto.png'),
     ]) {
       final bytes = await rootBundle.load(asset);
       File('$configDir/$name').writeAsBytesSync(bytes.buffer.asUint8List());

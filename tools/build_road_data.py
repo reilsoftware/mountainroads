@@ -197,15 +197,15 @@ def main():
         print(f"{name}: {len(pts)} points, {len(buffered)} zones: "
               + " ".join(f"{n}@{s / 1000:.2f}={l:.0f}" for s, l, n in buffered))
 
-    # AURA recinto in La Serena: every road 25 km/h. The roads around it
+    # AURA recinto in La Serena: 20 km/h, main roads 30. The roads around it
     # ("other") only tell the app when the driver is not in the recinto.
     rec = json.loads((DATA / "recinto.json").read_text())
     for r in rec["recinto"]:
         branches.append({"name": f"Recinto {r['id']}", "kind": "recinto", "points": r["points"],
-                         "zones": [[0, rec["limit_kmh"]]]})
+                         "zones": [[0, r["limit_kmh"]]]})
     for o in rec["others"]:
         branches.append({"name": o["name"], "kind": "other", "points": o["points"], "zones": [[0, 0]]})
-    print(f"Recinto: {len(rec['recinto'])} roads at {rec['limit_kmh']} km/h, {len(rec['others'])} other roads nearby")
+    print(f"Recinto: {len(rec['recinto'])} sections, {len(rec['others'])} other roads nearby")
 
     OUT.write_text(json.dumps({"placeholder_limits": False, "branches": branches}, separators=(",", ":")))
     print(f"wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size // 1024} KB)")

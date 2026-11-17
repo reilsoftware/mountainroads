@@ -317,7 +317,7 @@ class _TogglesPageState extends State<_TogglesPage> with WidgetsBindingObserver,
           SwitchListTile(
             title: const Text('Recinto alarms'),
             subtitle: const Text(
-              'Alarms in the AURA recinto in La Serena (Av. Juan Cisternas 1500), 25 km/h on all its roads. '
+              'Alarms in the AURA recinto in La Serena (Av. Juan Cisternas 1500), 20 km/h, 30 on the main roads. '
               'When off, speed, limit and colours still show there but there is no sound. Default on.',
             ),
             value: c.recinto,
@@ -443,7 +443,7 @@ class _FolderPageState extends State<_FolderPage> with WidgetsBindingObserver, _
               ),
               _Info('Colours', c.colors == null ? 'standard' : 'ColorBlind.txt'),
               _Info('Recorded signs', '${c.signs.length}'),
-              const _Info('Maps', 'SpeedZones.png, SpeedZones_Ruta41.png'),
+              const _Info('Maps', 'SpeedZones.png, SpeedZones_Ruta41.png, SpeedZones_Recinto.png'),
               const _Text('Edit or rename the files on the SD card (see ReadMe), then tap Reload.', small: true),
               Padding(
                 padding: const EdgeInsets.all(16),

@@ -8,11 +8,18 @@ import 'package:mountain_roads/road.dart';
 void main() {
   final road = Road.fromJson(File('assets/road.json').readAsStringSync());
 
-  test('AURA recinto in La Serena is 25 km/h', () {
+  test('AURA recinto in La Serena: main road from the gate is 30 km/h', () {
     final m = road.match(-29.916735, -71.243321);
     expect(m.onRoad, isTrue);
     expect(m.inRecinto, isTrue);
-    expect(m.limitKmh, 25);
+    expect(m.limitKmh, 30);
+  });
+
+  test('Alberto Arenas Carvajal: 30 up from Casa Verde, 20 below the Gemini offices', () {
+    expect(road.match(-29.917063, -71.240479).limitKmh, 30);
+    final m = road.match(-29.916575, -71.241446);
+    expect(m.inRecinto, isTrue);
+    expect(m.limitKmh, 20);
   });
 
   test('Av. Juan Cisternas beside the recinto gate is not the recinto', () {

@@ -4,6 +4,7 @@
 Usage (needs matplotlib):
   python3 tools/render_map.py            # docs/speed_zones.png (mountain roads)
   python3 tools/render_map.py --ruta41   # docs/speed_zones_ruta41.png (+ airport to gate)
+  python3 tools/render_map.py --recinto  # docs/speed_zones_recinto.png (AURA recinto, La Serena)
 """
 import json
 import math
@@ -19,7 +20,8 @@ from matplotlib.patches import ConnectionPatch, Rectangle
 
 ROOT = Path(__file__).resolve().parent.parent
 RUTA41 = "--ruta41" in sys.argv
-OUT = ROOT / "docs" / ("speed_zones_ruta41.png" if RUTA41 else "speed_zones.png")
+RECINTO = "--recinto" in sys.argv
+OUT = ROOT / "docs" / ("speed_zones_recinto.png" if RECINTO else "speed_zones_ruta41.png" if RUTA41 else "speed_zones.png")
 
 COLORS = {20: "#7b2cbf", 30: "#d7191c", 40: "#f28e00", 50: "#f2d300", 60: "#8fd14f", 70: "#1a7a2e",
           80: "#17a5c8", 100: "#1f4fbf"}
@@ -135,9 +137,64 @@ def style(ax):
     ax.set_yticks([])
 
 
+def recinto_map(road):
+    """The AURA recinto in La Serena, with the outside roads around it in grey."""
+    global REF_LAT
+    REF_LAT = math.radians(-29.917)
+    rec = [b for b in road["branches"] if b.get("kind") == "recinto"]
+    others = [b for b in road["branches"] if b.get("kind") == "other"]
+    fig, ax = plt.subplots(figsize=(16, 11), dpi=300)
+    style(ax)
+    named = {}
+    for b in others:
+        xs, ys = zip(*[xy(*p) for p in b["points"]])
+        ax.plot(xs, ys, color="#b8b8b8", lw=3, solid_capstyle="round", zorder=1)
+        if b["name"][0].isupper() and len(b["points"]) > 1:
+            named.setdefault(b["name"], []).append((xs, ys))
+    draw_roads(ax, {"branches": rec}, lw=7)
+    pts = [xy(*p) for b in rec for p in b["points"]]
+    pad = 0.08  # km
+    xs, ys = zip(*pts)
+    x0, x1, y0, y1 = min(xs) - pad, max(xs) + pad, min(ys) - pad, max(ys) + pad
+    ax.set_xlim(x0, x1)
+    ax.set_ylim(y0, y1)
+    for name, lines in named.items():
+        xs, ys = max(lines, key=lambda l: len(l[0]))
+        i = len(xs) // 2
+        if x0 < xs[i] < x1 and y0 < ys[i] < y1:
+            ax.text(xs[i], ys[i], name, fontsize=8, color="#666666", ha="center", va="center", zorder=3, clip_on=True,
+                    bbox=dict(boxstyle="round,pad=0.1", fc="#f4f1ea", ec="none", alpha=0.8))
+    for name, (lat, lon, (dx, dy)) in {
+        "Oficinas Gemini Sur": (-29.91630, -71.24165, (0, 22)),
+        "Casa Verde": (-29.91750, -71.23990, (0, -26)),
+        "Av. Juan Cisternas (gate)": (-29.91625, -71.24440, (-14, 0)),
+    }.items():
+        x, y = xy(lat, lon)
+        ax.plot(x, y, marker="o", ms=8, mfc="white", mec="black", mew=1.5, zorder=5)
+        ax.annotate(name, (x, y), xytext=(dx, dy), textcoords="offset points", fontsize=12, fontweight="bold",
+                    ha="center" if dx == 0 else "right" if dx < 0 else "left", va="center", zorder=6,
+                    bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="black", lw=0.8))
+    used = {int(z[1]) for b in rec for z in b["zones"]}
+    handles = [Line2D([], [], color=c, lw=7, label=f"{k} km/h") for k, c in COLORS.items() if k in used]
+    handles.append(Line2D([], [], color="#b8b8b8", lw=3, label="not the recinto"))
+    ax.legend(handles=handles, loc="lower left", fontsize=13, framealpha=0.95, title="Speed limit", title_fontsize=13)
+    sx, sy = x0 + (x1 - x0) * 0.75, y0 + (y1 - y0) * 0.06
+    ax.plot([sx, sx + 0.1], [sy, sy], color="black", lw=3)
+    ax.text(sx + 0.05, sy + (y1 - y0) * 0.02, "100 m", ha="center", fontsize=12)
+    ax.annotate("N", xy=(x1 - (x1 - x0) * 0.04, y1 - (y1 - y0) * 0.04), xytext=(0, -45),
+                textcoords="offset points", ha="center", fontsize=15, fontweight="bold",
+                arrowprops=dict(arrowstyle="-|>", lw=2, color="black"))
+    ax.set_title("AURA recinto, La Serena (Av. Juan Cisternas 1500): 20 km/h, main roads 30 km/h", fontsize=17)
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(OUT, dpi=300, bbox_inches="tight", facecolor="white")
+    print(f"wrote {OUT}")
+
+
 def main():
     road = json.loads((ROOT / "assets" / "road.json").read_text())
-    road["branches"] = [b for b in road["branches"] if RUTA41 or "optional" not in b]
+    if RECINTO:
+        return recinto_map(road)
+    road["branches"] = [b for b in road["branches"] if (RUTA41 or "optional" not in b) and "kind" not in b]
     # Only show colours that are used.
     used = {int(z[1]) for b in road["branches"] for z in b["zones"]}
     fig = plt.figure(figsize=(23, 14) if RUTA41 else (17, 14), dpi=300)
