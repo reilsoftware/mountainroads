@@ -23,7 +23,7 @@ With SD card access allowed, the app creates `/sdcard/MountainRoads` with a
 | File | Effect |
 |---|---|
 | `1.mp3` / `2.mp3` | Yellow and red alarm sounds; replace with your own (`.wav`, `.m4a`, `.ogg` also work). Written with the built-in beeps if missing. |
-| `0SecondsWarning.txt` | Beep immediately. Rename to `10SecondsWarning.txt` / `20SecondsWarning.txt` to beep only after 10 / 20 s over the limit (the screen still changes at once). |
+| `0SecondsWarning.txt` | Beep immediately. Rename to `10SecondsWarning.txt` / `20SecondsWarning.txt` to beep only after 10 / 20 s over the limit (the screen still changes at once). When the limit goes down there are always 5 s to slow down first, then this delay on top. |
 | `1020percent.txt` | Alarms over 10% / 20% of the limit (default). Rename to e.g. `1530percent.txt` or `0510percent.txt`; without `percent` (`1020.txt`, `0510.txt`, `0515.txt`) the digits are km/h over the limit. First two digits yellow, last two red. |
 | `60_up.txt`, `40_down.txt`, … | Speed signs recorded in debug mode, one `lat,lon` line each. From a sign on, in its direction (up or down the mountain), its limit replaces the built-in one until the next zone change or sign. |
 | `SpeedZones.png`, `SpeedZones_Ruta41.png`, `SpeedZones_Recinto.png` | The three speed-limit maps (rewritten by the app at each start). |

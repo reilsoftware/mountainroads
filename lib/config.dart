@@ -102,6 +102,8 @@ Settings). Delete a file to go back to the default.
 0SecondsWarning.txt   Beep as soon as you are over the limit.
         Rename it to 10SecondsWarning.txt or 20SecondsWarning.txt to beep
         only after you have been over the limit for 10 or 20 seconds.
+        When the limit goes down, you always get 5 seconds to slow down
+        first, then this delay on top (0 s: 5 s, 10 s: 15 s, 20 s: 25 s).
         The screen still changes straight away.
 
 1020percent.txt   When the alarms start. The first two digits are the

@@ -437,9 +437,8 @@ class _FolderPageState extends State<_FolderPage> with WidgetsBindingObserver, _
               _Info('Red alarm sound', sound(c.loudSoundPath, 'built-in beep')),
               _Info(
                 'Warning delay',
-                c.alarmDelaySeconds == 0
-                    ? 'immediately (0SecondsWarning.txt)'
-                    : '${c.alarmDelaySeconds} s (${c.alarmDelaySeconds}SecondsWarning.txt)',
+                '${c.alarmDelaySeconds == 0 ? 'immediately' : '${c.alarmDelaySeconds} s'} '
+                '(${c.alarmDelaySeconds}SecondsWarning.txt); after the limit goes down, 5 s more',
               ),
               _Info('Colours', c.colors == null ? 'standard' : 'ColorBlind.txt'),
               _Info('Recorded signs', '${c.signs.length}'),

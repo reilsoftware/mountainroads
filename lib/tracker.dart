@@ -16,6 +16,23 @@ const double sleepDistanceM = 1000;
 /// ~550 m in 20 s, so it wakes well before reaching the road.
 const Duration sleepInterval = Duration(seconds: 20);
 
+/// After the limit goes down, the driver gets this long to slow down before
+/// any sound, on top of the warning delay (0/10/20SecondsWarning.txt).
+const limitDropGrace = Duration(seconds: 5);
+
+/// Whether the alarm may sound: over the limit since [overSince] for at least
+/// [delaySeconds], counting only from [limitDropGrace] after the last limit
+/// drop ([limitDropAt]).
+bool soundDue(DateTime now, DateTime? overSince, DateTime? limitDropAt, int delaySeconds) {
+  if (overSince == null) return false;
+  var start = overSince;
+  if (limitDropAt != null) {
+    final graceEnd = limitDropAt.add(limitDropGrace);
+    if (graceEnd.isAfter(start)) start = graceEnd;
+  }
+  return !now.isBefore(start.add(Duration(seconds: delaySeconds)));
+}
+
 class TrackerState {
   final double? speedKmh;
   final double? distanceM;
@@ -92,6 +109,8 @@ class Tracker {
   bool? _sleeping;
   AppConfig config = const AppConfig();
   DateTime? _overSince; // when the driver went over the limit
+  double? _lastLimit; // limit at the last on-road fix
+  DateTime? _limitDropAt; // when the limit last went down
   bool _waitingForLocation = false;
   bool _forceLocationManager = false; // set if the fused provider refuses
   bool _visible = false; // app on screen: always full GPS so speed shows
@@ -253,10 +272,14 @@ class Tracker {
     } else {
       _overSince ??= now;
     }
-    final overFor = _overSince == null ? Duration.zero : now.difference(_overSince!);
+    if (match.onRoad) {
+      if (_lastLimit != null && match.limitKmh < _lastLimit!) _limitDropAt = now;
+      _lastLimit = match.limitKmh;
+    }
     // "Recinto alarms" off: no sound in the AURA recinto in La Serena.
     final alarmsOn = !match.inRecinto || config.recinto;
-    _beeper.update(alarmsOn && overFor.inSeconds >= config.alarmDelaySeconds ? status : SpeedStatus.ok);
+    final due = soundDue(now, _overSince, _limitDropAt, config.alarmDelaySeconds);
+    _beeper.update(alarmsOn && due ? status : SpeedStatus.ok);
     final sleep = match.distanceM > sleepDistanceM && !_visible;
     if (sleep != _sleeping) {
       _sleeping = sleep;
