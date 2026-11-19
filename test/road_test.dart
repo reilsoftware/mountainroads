@@ -143,19 +143,19 @@ void main() {
       return ((p[0] as num).toDouble(), (p[1] as num).toDouble());
     }
 
-    double limit((double, double) p, {bool down = false}) => r.match(p.$1, p.$2, down: down).limitKmh;
+    double limit((double, double) p) => r.match(p.$1, p.$2).limitKmh;
     // Zone 4 (70) to 6.67 km, zone 5 (40) to 14.32 km, then zone 6 (70).
     final (k6, k9, k10, k12, k15) = (at(6), at(9), at(10), at(12), at(15));
-    expect([limit(k9), limit(k12), limit(k12, down: true)], [40, 40, 40]);
+    expect([limit(k9), limit(k12)], [40, 40]);
     r.applySigns(
       parseSigns('60_up.txt', '${k10.$1},${k10.$2}\n') + parseSigns('30_down.txt', '${k10.$1},${k10.$2}\nnot a line\n'),
     );
-    expect(limit(k9), 40); // before the up sign
-    expect(limit(k12), 60); // past it going up
-    expect(limit(k15), 70); // next zone change ends it
-    expect(limit(k12, down: true), 40); // down: not yet at the down sign
-    expect(limit(k9, down: true), 30); // past the down sign going down
-    expect(limit(k6, down: true), 70); // zone 4 below ends it
+    // Same limits both ways: the up sign sets the stretch above it, the down
+    // sign the stretch below it.
+    expect(limit(k12), 60); // above the up sign
+    expect(limit(k15), 70); // next zone change above ends it
+    expect(limit(k9), 30); // below the down sign
+    expect(limit(k6), 70); // zone 4 below ends it
     expect(parseSigns('ColorBlind.txt', '1,2'), isEmpty);
   });
 

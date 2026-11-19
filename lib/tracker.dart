@@ -115,10 +115,6 @@ class Tracker {
   bool _forceLocationManager = false; // set if the fused provider refuses
   bool _visible = false; // app on screen: always full GPS so speed shows
   Position? _lastPos; // for speed when the fix has none
-  // Driving direction, from how the position moves along the road.
-  String? _lastBranch;
-  double? _lastAlong;
-  bool _down = false;
   TrackerState state = const TrackerState();
 
   Tracker(this.onState);
@@ -248,21 +244,8 @@ class Tracker {
 
   void _onPosition(Position p) {
     final speed = _speedKmh(p);
-    var match = _road!.match(p.latitude, p.longitude, down: _down);
-    // Up or down the mountain: needs a clear move along the same branch.
-    if (match.onRoad && match.branch == _lastBranch && _lastAlong != null) {
-      final moved = match.alongM - _lastAlong!;
-      if (moved.abs() > 10) {
-        if ((moved < 0) != _down) {
-          _down = moved < 0;
-          match = _road!.match(p.latitude, p.longitude, down: _down);
-        }
-        _lastAlong = match.alongM;
-      }
-    } else {
-      _lastBranch = match.branch;
-      _lastAlong = match.alongM;
-    }
+    // Same limits going up and down, so the direction does not matter.
+    final match = _road!.match(p.latitude, p.longitude);
     final status = speed != null && match.onRoad ? classify(speed, match.limitKmh, config.thresholds) : SpeedStatus.ok;
     // The screen changes straight away; the sound waits until the driver has
     // been over the limit for the configured delay (10/20SecondsWarning.txt).

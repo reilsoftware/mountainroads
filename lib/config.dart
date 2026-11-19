@@ -127,7 +127,9 @@ ColorBlind.txt   If this file exists, its first line sets the three screen
 60_up.txt, 40_down.txt, ...   Speed signs, one "lat,lon" line each, as
         recorded in debug mode (Settings). From a sign on, going up (or
         down) the mountain, its limit replaces the built-in one until the
-        next zone change or sign. Edit or delete them to fix mistakes.
+        next zone change or sign. Limits are the same going up and down:
+        that stretch has the sign's limit both ways. Edit or delete them
+        to fix mistakes.
 
 Switches in Settings -> Toggles (kept in the app, not in this folder):
         Random sounds, Ruta 41 alarms (from La Serena airport) and

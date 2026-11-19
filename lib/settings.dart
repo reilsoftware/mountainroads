@@ -370,7 +370,8 @@ class _DebugPageState extends State<_DebugPage> with WidgetsBindingObserver, _Li
             '• 20 to 100: tap the number on a speed sign as you pass it.\n\n'
             'Each tap adds the current GPS position to a file in $configDir, for example '
             '60_up.txt or 40_down.txt (one "lat,lon" line per sign). From each sign on, in its direction, '
-            'its limit replaces the built-in one until the next zone change or sign. These files stay on '
+            'its limit replaces the built-in one until the next zone change or sign, and that stretch then '
+            'has the same limit going up and down. These files stay on '
             'the SD card only; edit or delete them there to fix mistakes.',
           ),
           if (_isAndroid) ...[

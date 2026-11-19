@@ -34,7 +34,9 @@ class RoadMatch {
 
 /// A speed sign recorded in debug mode (files like 60_up.txt): from this
 /// point on, driving up (or down) the mountain, the limit is [limitKmh]
-/// until the next zone change or sign.
+/// until the next zone change or sign. The limits are the same in both
+/// directions: an up sign sets the stretch above it, a down sign the
+/// stretch below it.
 class Sign {
   final double limitKmh;
   final bool down;
@@ -50,31 +52,42 @@ class _Branch {
   /// A road near the recinto that is not ours (no limit of its own).
   final bool other;
 
-  /// Going up: (startAlongM, limitKmh), sorted; the last start at or before
-  /// the position applies.
-  List<(double, double)> up;
+  /// (startAlongM, limitKmh), sorted; the last start at or before the
+  /// position applies. The same going up and down.
+  List<(double, double)> zones;
 
-  /// Going down: (endAlongM, limitKmh), sorted; the first end beyond the
-  /// position applies (a zone change seen from above).
-  List<(double, double)> down;
+  _Branch(this.name, this.xs, this.ys, this.cum, this.zones, {this.other = false});
 
-  _Branch(this.name, this.xs, this.ys, this.cum, List<(double, double)> zones, {this.other = false})
-    : up = zones,
-      down = [for (var i = 1; i < zones.length; i++) (zones[i].$1, zones[i - 1].$2), (double.infinity, zones.last.$2)];
-
-  double limitAt(double along, {bool down = false}) {
-    if (down) {
-      for (final z in this.down) {
-        if (z.$1 > along) return z.$2;
-      }
-      return this.down.last.$2;
-    }
-    var limit = up.first.$2;
-    for (final z in up) {
+  double limitAt(double along) {
+    var limit = zones.first.$2;
+    for (final z in zones) {
       if (z.$1 > along) break;
       limit = z.$2;
     }
     return limit;
+  }
+
+  /// Sets [limit] from [from] to [to]; beyond [to] the limit stays as it was.
+  void _setRange(double from, double to, double limit) {
+    final after = limitAt(to);
+    zones = [
+      for (final z in zones)
+        if (z.$1 < from || z.$1 >= to) z,
+      (from, limit),
+      if (to.isFinite && !zones.any((z) => z.$1 == to)) (to, after),
+    ]..sort((a, c) => a.$1.compareTo(c.$1));
+  }
+
+  /// A sign at [along]: going up it covers the stretch to the next change
+  /// above; going down, the stretch to the previous change below.
+  void applySign(double along, double limit, {required bool down}) {
+    if (down) {
+      final below = zones.lastWhere((z) => z.$1 < along, orElse: () => zones.first).$1;
+      _setRange(below < along ? below : 0, along, limit);
+    } else {
+      final above = zones.firstWhere((z) => z.$1 > along, orElse: () => (double.infinity, 0)).$1;
+      _setRange(along, above, limit);
+    }
   }
 
   /// (squared distance, along) of the nearest point on this branch.
@@ -124,9 +137,9 @@ class Road {
     return Road._(branches, data['placeholder_limits'] == true);
   }
 
-  /// Nearest point on any branch of the road; [down] picks the limits for
-  /// driving down the mountain (towards the gate, or the airport).
-  RoadMatch match(double lat, double lon, {bool down = false}) {
+  /// Nearest point on any branch of the road. The limits are the same
+  /// driving up and down.
+  RoadMatch match(double lat, double lon) {
     final p = _toXY(lat, lon);
     var bestD = double.infinity;
     var bestAlong = 0.0;
@@ -146,14 +159,15 @@ class Road {
       math.sqrt(bestD),
       bestAlong,
       bestBranch.name,
-      bestBranch.limitAt(bestAlong, down: down),
+      bestBranch.limitAt(bestAlong),
       elsewhere: otherD <= bestD, // a tie (a junction) is the other road
     );
   }
 
   /// Recorded signs override the zone limits from where they stand to the
-  /// next zone change or sign in their direction. A sign counts for every
-  /// branch it is on (the branches share the lower road).
+  /// next zone change or sign in their direction, and the same stretch then
+  /// has that limit both ways. A sign counts for every branch it is on (the
+  /// branches share the lower road).
   void applySigns(Iterable<Sign> signs) {
     for (final s in signs) {
       final p = _toXY(s.lat, s.lon);
@@ -161,11 +175,7 @@ class Road {
         if (b.other) continue;
         final (d2, along) = b.project(p);
         if (d2 > onRoadThresholdM * onRoadThresholdM) continue;
-        if (s.down) {
-          b.down = [...b.down.where((z) => z.$1 != along), (along, s.limitKmh)]..sort((a, c) => a.$1.compareTo(c.$1));
-        } else {
-          b.up = [...b.up.where((z) => z.$1 != along), (along, s.limitKmh)]..sort((a, c) => a.$1.compareTo(c.$1));
-        }
+        b.applySign(along, s.limitKmh, down: s.down);
       }
     }
   }
