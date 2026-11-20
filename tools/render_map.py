@@ -109,6 +109,7 @@ def draw_zone_labels(ax, road, size, clip=None, exclude=()):
             side = -near[-1] if near else 1
             seen.append((p, side))
             label = (name.replace("Zone ", "Z") if name.startswith("Zone")
+                     else name.replace("Ruta41 ", "R") if name.startswith("Ruta41")
                      else "OSM" if name.startswith("OSM") else "Rubin")
             ax.plot(*p, marker="|", ms=size * 1.6, mew=1.5, color="black", zorder=3)
             ax.annotate(f"{label} · {limit:.0f}", p, xytext=(8 * side, 0), textcoords="offset points",
@@ -242,7 +243,7 @@ def main():
                  color="#b00000")
         fig.suptitle("AURA road speed zones: La Serena airport (Ruta 41) to Cerro Tololo and Cerro Pachón",
                      fontsize=18, y=0.955)
-        fig.text(0.5, 0.925, "Ruta 41 zones (ZA–ZM) and mountain zones (Z#) from Report_GPS_RUBIN_08_2020"
+        fig.text(0.5, 0.925, "Ruta 41 zones from signs tapped on 2026-11-19; mountain zones (Z#) from Report_GPS_RUBIN_08_2020"
                  " · Rubin spur 20 km/h", ha="center", fontsize=11, color="#444444")
     else:
         fig.suptitle("AURA road speed zones: Control Puerta to Cerro Tololo and Cerro Pachón", fontsize=18, y=0.95)

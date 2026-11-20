@@ -58,10 +58,13 @@ written to storage. The only files it writes are the settings files in
 With Ruta 41 alarms on: [docs/speed_zones_ruta41.png](docs/speed_zones_ruta41.png)
 (`.venv/bin/python tools/render_map.py --ruta41`).
 
-Ruta 41 uses the 2020 report's zones A–M. The report gives only place
-names for them, so their positions were taken from the report's geofence map
-(georeferenced onto the road). OpenStreetMap `maxspeed` was tried and dropped:
-it is wrong for most of the route.
+Ruta 41 limits come from signs tapped in debug mode on 2026-11-19 (24 zones,
+airport to the D-317 turn-off; the D-317 to Control Puerta stays 50 from the
+2020 report). Signs are missing on parts of the highway, so each stretch takes
+the up sign at its lower end and the down sign at its upper end; where they
+differ, or there is no sign either way, the lower limit is used. The 20/30
+construction zones seen that day are left out. OpenStreetMap `maxspeed` was
+tried and dropped: it is wrong for most of the route.
 
 Zones come from the 2020 AURA report `Report_GPS_RUBIN_08_2020_Kevin.xlsx` (not in this repository; sheet "Zone
 locations": km from Control Puerta and max speed), copied into

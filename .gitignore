@@ -54,3 +54,4 @@ dist/
 # Source spreadsheet (not published)
 /data/
 /tools/data/recinto_osm_map.json
+/debug_data/

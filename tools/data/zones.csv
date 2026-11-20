@@ -27,16 +27,28 @@ Zone 25,pachon,38.9,,,50,
 Zone 26,pachon,41.6,,,40,
 Zone 27,tololo,,-30.195868,-70.779942,40,El Quisco split to Tololo
 Rubin spur,rubin,,-30.2438541,-70.7403928,20,Split from Gemini/SOAR road to Rubin
-Zone A,ruta41,0,,,50,By Airport
-Zone B,ruta41,4.70,,,100,2.9 km from airport (map divider is 4.7 km along)
-Zone C,ruta41,5.97,,,70,Altovalsol
-Zone D,ruta41,8.68,,,100,Road to Las Rojas
-Zone E,ruta41,20.10,,,60,La Campana
-Zone F,ruta41,21.77,,,100,Past El Hinojal
-Zone G,ruta41,27.95,,,60,El Molle
-Zone H,ruta41,29.75,,,100,Almendral
-Zone I,ruta41,34.12,,,100,Almendral
-Zone J,ruta41,36.08,,,100,Puclaro
-Zone K,ruta41,41.17,,,60,La Polvadera
-Zone L,ruta41,41.67,,,100,Road to Control Puerta
-Zone M,ruta41,45.16,,,50,Ruta 41 to Control Puerta (D-317)
+Ruta41 1,ruta41,0,,,50,Taps 2026-11-19: sign coming down
+Ruta41 2,ruta41,2.748,,,80,Taps 2026-11-19: signs up and down agree
+Ruta41 3,ruta41,3.592,,,60,Taps 2026-11-19: up and down differ; lower used
+Ruta41 4,ruta41,3.949,,,80,Taps 2026-11-19: no sign; lower of the nearest up/down
+Ruta41 5,ruta41,5.532,,,50,Taps 2026-11-19: signs up and down agree
+Ruta41 6,ruta41,6.166,,,80,Taps 2026-11-19: sign going up
+Ruta41 7,ruta41,6.772,,,70,Taps 2026-11-19: signs up and down agree
+Ruta41 8,ruta41,7.22,,,50,Taps 2026-11-19: sign coming down
+Ruta41 9,ruta41,7.509,,,80,Taps 2026-11-19: signs up and down agree
+Ruta41 10,ruta41,8.418,,,60,Taps 2026-11-19: sign going up
+Ruta41 11,ruta41,9.804,,,80,Taps 2026-11-19: no sign; lower of the nearest up/down
+Ruta41 12,ruta41,12.231,,,60,Taps 2026-11-19: up and down differ; lower used
+Ruta41 13,ruta41,12.828,,,70,Taps 2026-11-19: up and down differ; lower used
+Ruta41 14,ruta41,13.394,,,80,Taps 2026-11-19: sign going up
+Ruta41 15,ruta41,13.954,,,100,Taps 2026-11-19: signs up and down agree
+Ruta41 16,ruta41,14.665,,,60,Taps 2026-11-19: signs up and down agree
+Ruta41 17,ruta41,15.609,,,80,Taps 2026-11-19: signs up and down agree
+Ruta41 18,ruta41,22.761,,,60,Taps 2026-11-19: signs up and down agree
+Ruta41 19,ruta41,25.799,,,50,Taps 2026-11-19: signs up and down agree
+Ruta41 20,ruta41,28.467,,,70,Taps 2026-11-19: signs up and down agree
+Ruta41 21,ruta41,29.381,,,100,Taps 2026-11-19: signs up and down agree
+Ruta41 22,ruta41,38.13,,,60,Taps 2026-11-19: up and down differ; lower used
+Ruta41 23,ruta41,38.575,,,70,Taps 2026-11-19: sign going up
+Ruta41 24,ruta41,43.301,,,80,Taps 2026-11-19: signs up and down agree
+Ruta41 25,ruta41,45.16,,,50,D-317 to Control Puerta (2020 report; no taps)

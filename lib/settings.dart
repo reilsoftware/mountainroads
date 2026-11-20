@@ -309,7 +309,7 @@ class _TogglesPageState extends State<_TogglesPage> with WidgetsBindingObserver,
           SwitchListTile(
             title: const Text('Ruta 41 alarms'),
             subtitle: const Text(
-              'Also watch Ruta 41 from La Serena airport to Control Puerta (zones A–M). Default off.',
+              'Also watch Ruta 41 from La Serena airport to Control Puerta (limits from signs, Nov 2026). Default off.',
             ),
             value: c.ruta41,
             onChanged: (on) => _set(() => saveToggle(ruta41Toggle, on)),

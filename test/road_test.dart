@@ -121,7 +121,7 @@ void main() {
     final json = File('assets/road.json').readAsStringSync();
     final withRuta41 = Road.fromJson(json, optional: {'ruta41'});
     final ruta41 = (jsonDecode(json)['branches'] as List).firstWhere((b) => b['name'] == 'Ruta41')['points'] as List;
-    // A point on Ruta 41 about 7 km from the airport (zone C, Altovalsol, 70).
+    // A point on Ruta 41 about 7 km from the airport (70 from the Nov 2026 signs).
     final p = ruta41.firstWhere((p) => withRuta41.match(p[0], p[1]).alongM > 7000) as List;
     final (lat, lon) = ((p[0] as num).toDouble(), (p[1] as num).toDouble());
     expect(road.match(lat, lon).onRoad, isFalse);
